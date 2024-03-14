@@ -12,6 +12,10 @@ int main(int argc, char const *argv[])
     WSADATA wsadata;
     iniciar_winsock(&wsadata);
 
+    // Crear el buffer para la comunicacion entre el cliente y servidor
+
+    char buffer[1024] = {0};
+
     // Crear el socket del servidor.
 
     SOCKET listen_socket;
@@ -45,7 +49,20 @@ int main(int argc, char const *argv[])
 
     while(true){
 
-        SOCKET client_socket = accept(listen_socket, (struct sockaddr*)&clientaddr, &len);
+        SOCKET client_socket;
+        client_socket = accept(listen_socket, (struct sockaddr*)&clientaddr, &len);
+        printf("Client connected.\n");
+
+        int bytes_recibidos = recv(client_socket, buffer, sizeof(buffer), 0);
+
+        if(bytes_recibidos == SOCKET_ERROR)
+        {
+            printf("Error recibiendo el mensaje.\n");
+        }
+
+        buffer[bytes_recibidos] = '\0'; 
+
+        printf("Mensaje recibido: %s\n", buffer);
 
     }
 
