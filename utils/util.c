@@ -17,7 +17,7 @@ struct sockaddr_in create_address(int family, int PORT, const char* address){
     struct sockaddr_in addr;
     addr.sin_family = family;
     addr.sin_port = htons(PORT);
-    addr.sin_addr.s_addr = inet_addr(address);
+    addr.sin_addr.s_addr = inet_addr(address); //Probar con INADDR_ANY
 
     return addr;
 }
