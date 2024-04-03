@@ -10,8 +10,7 @@ int main() {
     PGconn *conn;
     PGresult *res;
     const char *conninfo = "host=ep-weathered-butterfly-a2sa2f1m.eu-central-1.aws.neon.tech dbname=P2P-project-prog-IV user=P2P-project-prog-IV_owner password=3AlxMIGipb4z"; // Información de conexión
-
-    // Realizamos la conexión a la base de datos
+    // Realizamos la conexión a la base de datoss
     conn = PQconnectdb(conninfo);
     // Verificamos si la conexión fue exitosa
     if (PQstatus(conn) != CONNECTION_OK) {
