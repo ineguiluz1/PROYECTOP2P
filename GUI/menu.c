@@ -3,11 +3,15 @@
 #include <string.h>
 #include <stdlib.h>
 #include <windows.h>
+#include "../BD/bd.h"
+#include <libpq-fe.h>
+#include "../estructuras/Archivo/Archivo.h"
+#include "../estructuras/Usuario/Usuario.h"
 
 char nombre[20];
 char passw[20];
 
-void initGUI()
+void initGUI(PGconn *conn)
 {
         /* code */
     char input[10];
@@ -18,8 +22,8 @@ void initGUI()
     do{
         if(!sesion_iniciada)
         {
-                    // Mostrar el primer menu
-        mostrar_menu_login();
+        // Mostrar el primer menu
+        mostrar_menu_login(conn);
         insertar_separador();
 
         // Guardar la opcion
@@ -27,7 +31,7 @@ void initGUI()
         sscanf(input, "%d", &opcion_inicio);
 
         // Ejecuta la opcion
-        ejecutar_opcion_inicio(opcion_inicio);
+        ejecutar_opcion_inicio(conn,opcion_inicio);
 
         if(opcion_inicio == 1 || opcion_inicio == 2)
         {
@@ -37,21 +41,21 @@ void initGUI()
         }else{
             
             // Mostrar el menu principal de la app
-            mostrar_menu_ppal();
+            mostrar_menu_ppal(conn);
 
             // Guardar la opcion en su variable correspondiente
             fgets(input, sizeof(input), stdin);
             sscanf(input, "%d", &opcion_ppal);
 
             // Ejecutar la opcion
-            ejecutar_opcion_ppal(opcion_ppal);
+            ejecutar_opcion_ppal(conn,opcion_ppal);
             
         }
 
     }while(opcion_inicio != 3);
 }
 
-void mostrar_menu_login()
+void mostrar_menu_login(PGconn *conn)
 {
     printf("MENU PRINCIPAL\n\n\n");
     printf("Bienvenido al administrador del servidor\n\n");
@@ -67,17 +71,17 @@ void insertar_separador()
     printf("=========================================\n");
 }
 
-void ejecutar_opcion_inicio( int opcion )
+void ejecutar_opcion_inicio( PGconn *conn, int opcion )
 {
     switch(opcion)
     {
         // Caso login
         case 1:
-            intro_credenciales(nombre, passw);
+            intro_credenciales(conn,nombre, passw);
             break;
         // Caso registro
         case 2:
-            intro_datos_registro();
+            intro_datos_registro(conn);
             break;
         // Salir
         case 3:
@@ -91,18 +95,18 @@ void ejecutar_opcion_inicio( int opcion )
     }
 }
 
-void intro_credenciales(char* nombre_usu, char* pass)
+void intro_credenciales(PGconn*conn, char *email, char *pass)
 {
-    char nombre_input[20];
+    char email_input[60];
     char pass_input[20];
 
-    printf("Introduce tu nombre de usuario (máximo 20 caracteres): ");
-    fgets(nombre_input, sizeof(nombre_input), stdin);
+    printf("Introduce tu email: ");
+    fgets(email_input, sizeof(email_input), stdin);
 
     // Eliminar el salto de línea del final de la entrada
-    nombre_input[strcspn(nombre_input, "\n")] = '\0';
+    email_input[strcspn(email_input, "\n")] = '\0';
 
-    printf("Introduce tu contrasenya (máximo 20 caracteres): ");
+    printf("Introduce tu contrasenya: ");
     fgets(pass_input, sizeof(pass_input), stdin);
 
     // Eliminar el salto de línea del final de la entrada
@@ -115,17 +119,19 @@ void intro_credenciales(char* nombre_usu, char* pass)
     }
 
     // Copiar las credenciales introducidas en los punteros proporcionados
-    strcpy(nombre_usu, nombre_input);
+    strcpy(email, email_input);
     strcpy(pass, pass_input);
 
     //! Anyadir metodo para checkear las credenciales
+    if(!autenticar_usuario(conn, email, pass))exit(0);
 
 }
 
-void intro_datos_registro() {
+void intro_datos_registro(PGconn *conn) {
     // Datos para el registro
     char nombre[50];
     char username[50];
+    char email[70];
     char passw[50];
     char passw_repeat[50];
 
@@ -134,6 +140,10 @@ void intro_datos_registro() {
     printf("Introduce tu nombre: ");
     fgets(nombre, sizeof(nombre), stdin);
     nombre[strcspn(nombre, "\n")] = '\0';
+
+    printf("Introduce tu email: ");
+    fgets(email, sizeof(email), stdin);
+    email[strcspn(email, "\n")] = '\0';
 
     printf("Introduce tu nombre de usuario: ");
     fgets(username, sizeof(username), stdin);
@@ -154,16 +164,17 @@ void intro_datos_registro() {
     }
 
     //! Introducir la funcion para el registro del usuario
+    registrar_usuario2(conn, username, email, passw);
 }
 
-void mostrar_menu_ppal()
+void mostrar_menu_ppal(PGconn *conn)
 {
     clear_prompt();
     insertar_separador();
     printf("\nMENU PRINCIPAL\n\n");
     insertar_separador();
     printf("1. Gestion de nodos P2P\n2. Gestion de archivos\n3. Datos de las transferencias"
-    "\n4. Visualizar usuarios\n5. Explorar archivos\n6. Salir\n\n");
+    "\n4. Visualizar usuarios\n5. Explorar archivos\n6. Limpiar la BD\n7. Salir\n\n");
     printf("Introduce una opcion: \n");
     insertar_separador();
 }
@@ -173,7 +184,7 @@ void clear_prompt()
     system("cls");
 }
 
-void ejecutar_opcion_ppal( int opcion )
+void ejecutar_opcion_ppal( PGconn *conn,int opcion )
 {
     switch(opcion)
     {
@@ -183,7 +194,7 @@ void ejecutar_opcion_ppal( int opcion )
             break;
         // Caso de gestion de archivos
         case 2:
-            mostrar_menu_archivos();
+            mostrar_menu_archivos(conn);
             break;
         // Caso de muestra de transferencias
         case 3:
@@ -197,7 +208,12 @@ void ejecutar_opcion_ppal( int opcion )
         case 5:
             mostrar_explorador_archivos();
             break;
+        // Limpieza de la base de datos
         case 6:
+            limpiarBD(conn);
+            break;
+        // Salir
+        case 7:
             clear_prompt();
             exit(0);
             break;
@@ -210,6 +226,9 @@ void ejecutar_opcion_ppal( int opcion )
 
 void mostrar_menu_nodos()
 {
+    char input[2];
+    int opcion; 
+
     clear_prompt();
     insertar_separador();
     printf("MENU DE GESTION DE NODOS\n");
@@ -217,16 +236,83 @@ void mostrar_menu_nodos()
     printf("1. Anyadir nodo\n2. Eliminar nodo\n3. Visualizar nodos\n\n");
     printf("Introduce tu opcion: \n\n");
 
+    fgets(input, sizeof(input), stdin);
+    sscanf(input,"%d", &opcion);
+
+    switch(opcion)
+    {
+        case 1:
+
+        case 2:
+
+        case 3:
+
+    }
+
 }
 
-void mostrar_menu_archivos()
+void mostrar_menu_archivos(PGconn *conn)
 {
+    char input[2];
+    int opcion; 
+
     clear_prompt();
     insertar_separador();
     printf("MENU DE GESTION DE ARCHIVOS\n");
     insertar_separador();
     printf("1. Anyadir archivos\n2. Eliminar archivos\n3. Visualizar archivos\n\n");
-    printf("Introduce tu opcion: ");
+    printf("Introduce tu opcion: \n\n");
+
+    fgets(input, sizeof(input), stdin);
+    sscanf(input,"%d", &opcion);
+
+    switch(opcion)
+    {
+        case 1:
+            char input[50];
+            char nombre[50];
+            long tamanyo;
+            char tipo[50];
+            int id_usuario;
+            time_t fecha_subida;
+
+            printf("Introduce el nombre del archivo: \n\n");
+            fgets(nombre, sizeof(nombre), stdin);
+            nombre[strcspn(nombre, "\n")] = '\0';
+
+            printf("Introduce el tamanyo del archivo: \n\n");
+            fgets(input, sizeof(input), stdin);
+            sscanf(input, "%d", tamanyo);
+
+            printf("Introduce el tipo de archivo: ");
+            fgets(tipo, sizeof(tipo), stdin);
+            tipo[strcspn(tipo, "\n")] = '\0';
+
+            printf("Introduce el tipo del archivo: \n\n");
+            fgets(input, sizeof(input), stdin);
+            sscanf(input, "%d", id_usuario);
+
+            if(!insertar_Archivo(conn, nombre, tamanyo, tipo, fecha_subida, id_usuario))printf("Error al subir el archivo.\n");
+            
+        case 2:
+            int id;
+            char input_id[10];
+            printf("Introduce el id del archivo que deseas eliminar: \n\n");
+
+            fgets(input_id, sizeof(input_id), stdin);
+            sscanf(input_id, "%d", id);
+
+            if(!eliminar_Archivo(conn, id))printf("Error al imprimir archivo,\n\n");
+        case 3:
+            /*Archivo *archivos = get_archivos(conn,5);
+            for(int i = 0; i<5; i++)
+            {
+                imprimirArchivo(archivos[i]);
+            }*/
+
+    }
+
+
 }
 
 void mostrar_transferencias()
@@ -267,7 +353,7 @@ void mostrar_explorador_archivos()
 
     printf("Estas buscando %s", archivo);
 
-    //! Añadir la funcion para la busqueda de personas.
+    //! Añadir la funcion para la busqueda de archivos.
 
 }
 
