@@ -7,6 +7,7 @@
 #include <time.h>
 #include "../estructuras/Archivo/Archivo.h"
 #include "../estructuras/Usuario/Usuario.h"
+#include "../estructuras/Nodo/Nodo.h"
 
 
 // Funcion para conectar a la base de datos
@@ -114,11 +115,11 @@ bool insertar_Archivo(PGconn *conn, char *nombre, long tamanyo, char *tipo, time
 // Funcion para eliminar un archivo de la base de datos
 bool eliminar_Archivo(PGconn *conn, int id_archivo) {
     char query[1000];
-    sprintf(query, "DELETE FROM archivo WHERE id_archivo = %d", id_archivo);
+    sprintf(query, "DELETE FROM archivo WHERE id = %d", id_archivo);
 
     PGresult *res = PQexec(conn, query);
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        printf("Error executing query: %s\n", PQresultErrorMessage(res));
+        //printf("Error executing query: %s\n", PQresultErrorMessage(res));
         PQclear(res);
         return false;
     }
@@ -295,4 +296,426 @@ Usuario* get_usuarios(PGconn *conn, int *num_rows) {
     // Limpor la variable res y retornar el array de Usuarios
     PQclear(res);
     return usuarios;
+};
+
+Usuario* busqueda_usuarios_nombre(PGconn *conn, char *nombre, int *num_rows){
+    char query[1000];
+    sprintf(query, "SELECT * FROM usuario WHERE nombre LIKE '%%%s%%'", nombre);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        //printf("Query failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        return NULL;
+    }
+
+    *num_rows = PQntuples(res);
+
+    Usuario *usuarios = malloc(*num_rows * sizeof(Usuario));
+    if (usuarios == NULL) {
+        printf("Memory allocation failed\n");
+        PQclear(res);
+        return NULL;
+    }
+
+    for (int i = 0; i < *num_rows; i++) {
+        usuarios[i].id = atoi(PQgetvalue(res, i, 0));
+        strncpy(usuarios[i].nombre, PQgetvalue(res, i, 1), sizeof(usuarios[i].nombre) - 1);
+        strncpy(usuarios[i].email, PQgetvalue(res, i, 2), sizeof(usuarios[i].email) - 1);
+        strncpy(usuarios[i].contrasena, PQgetvalue(res, i, 3), sizeof(usuarios[i].contrasena) - 1);
+        usuarios[i].fecha_registro = strtotime(PQgetvalue(res, i, 4)); // Convert string to time_t
+        usuarios[i].ultimo_login = strtotime(PQgetvalue(res, i, 5)); // Convert string to time_t
+    }
+
+    PQclear(res);
+    return usuarios;
+};
+
+Archivo* busqueda_archivos_nombre(PGconn *conn, char *nombre, int *num_rows){
+    char query[1000];
+    sprintf(query, "SELECT * FROM archivo WHERE nombre LIKE '%%%s%%'", nombre);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        //printf("Query failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        return NULL;
+    }
+
+    *num_rows = PQntuples(res);
+
+    Archivo *archivos = malloc(*num_rows * sizeof(Archivo));
+    if (archivos == NULL) {
+        printf("Memory allocation failed\n");
+        PQclear(res);
+        return NULL;
+    }
+
+    for (int i = 0; i < *num_rows; i++) {
+        archivos[i].id = atoi(PQgetvalue(res, i, 0));
+        strncpy(archivos[i].nombre, PQgetvalue(res, i, 1), sizeof(archivos[i].nombre) - 1);
+        archivos[i].tamanyo = atol(PQgetvalue(res, i, 2));
+        strncpy(archivos[i].tipo, PQgetvalue(res, i, 3), sizeof(archivos[i].tipo) - 1);
+        archivos[i].fecha_subida = strtotime(PQgetvalue(res, i, 4)); // Convert string to time_t
+        archivos[i].id_usuario = atoi(PQgetvalue(res, i, 5));
+    }
+
+    PQclear(res);
+    return archivos;
+};
+
+// Insertar un nodo en la base de datos
+bool insertar_Nodo1(PGconn *conn, char *IP_dir, time_t ultima_actividad, int id_usuario){
+    struct tm *actividad_tm = localtime(&ultima_actividad);
+    char formatted_actividad[80];
+    strftime(formatted_actividad, 80, "%Y-%m-%d %H:%M:%S", actividad_tm);
+    char query[10000];
+    sprintf(query, "INSERT INTO nodo(IP_DIR, DISPONIBILIDAD, ULTIMA_ACTIVIDAD) VALUES('%s', FALSE, '%s') RETURNING id", IP_dir, formatted_actividad);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK){
+        //printf("Error executing query: %s\n", PQresultErrorMessage(res));
+        PQclear(res);
+        PQfinish(conn);
+        return false;
+    }
+    int id_generado = atoi(PQgetvalue(res, 0, 0));
+    char query2[10000];
+    sprintf(query2, "INSERT INTO usuarionodo(id_usuario,id_nodo) VALUES(%d, %d)", id_usuario, id_generado);
+    res = PQexec(conn, query2);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK){
+        //printf("Error executing query: %s\n", PQresultErrorMessage(res));
+        PQclear(res);
+        PQfinish(conn);
+        return false;
+    }
+    PQclear(res);
+    return true;
+};
+
+// Insertar un nodo en la base de datos
+bool insertar_Nodo2(PGconn *conn, char *IP_dir, int id_usuario){
+    char query[10000];
+    sprintf(query, "INSERT INTO nodo(IP_DIR, DISPONIBILIDAD, ULTIMA_ACTIVIDAD) VALUES('%s', FALSE, NOW()) RETURNING id", IP_dir);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_TUPLES_OK){
+        // printf("Error executing query 1: %s\n", PQresultErrorMessage(res));
+        PQclear(res);
+        PQfinish(conn);
+        return false;
+    }
+    int id_generado = atoi(PQgetvalue(res, 0, 0));
+    PQclear(res);
+    char query2[10000];
+    sprintf(query2, "INSERT INTO usuarionodo(ultima_conexion,id_usuario,id_nodo) VALUES(NOW(),%d, %d)", id_usuario, id_generado);
+    res = PQexec(conn, query2);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK){
+        // printf("Error executing query 2: %s\n", PQresultErrorMessage(res));
+        PQclear(res);
+        PQfinish(conn);
+        return false;
+    }
+    PQclear(res);
+    return true;
+};
+
+// Eliminar un nodo de la base de datos
+bool eliminar_Nodo(PGconn *conn, int id_nodo) {
+    char query[1000];
+    sprintf(query, "DELETE FROM nodo WHERE id = %d", id_nodo);
+
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+        //printf("Error executing query: %s\n", PQresultErrorMessage(res));
+        PQclear(res);
+        return false;
+    }
+    PQclear(res);
+    return true;
+};
+
+
+// Obtener los nodos de la base de datos
+Nodo *get_nodos(PGconn *conn, int *num_rows)
+{
+    PGresult *res = PQexec(conn, "SELECT * FROM nodo");
+
+    // Comprobar si la consulta fue exitosa
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        printf("Query failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        return NULL;
+    }
+
+    // Obtener el número de filas
+    *num_rows = PQntuples(res);
+
+    // Reservar memoria para el array de Nodos
+    Nodo *nodos = malloc(*num_rows * sizeof(Nodo));
+    if (nodos == NULL) {
+        printf("Memory allocation failed\n");
+        PQclear(res);
+        return NULL;
+    }
+
+    // Llenar el array de Nodos con los datos de la consulta
+    for (int i = 0; i < *num_rows; i++) {
+        nodos[i].id = atoi(PQgetvalue(res, i, 0));
+        strncpy(nodos[i].IP_dir, PQgetvalue(res, i, 1), sizeof(nodos[i].IP_dir) - 1);
+        nodos[i].disponibilidad = PQgetvalue(res, i, 2)[0] == 't';
+        nodos[i].ultima_actividad = strtotime(PQgetvalue(res, i, 3)); // Convert string to time_t
+    }
+
+    // Limpiar la variable res y retornar el array de Nodos
+    PQclear(res);
+    return nodos;
+};
+
+// Añadir usuario a nodo
+bool anyadir_usuario_nodo(PGconn *conn, int id_usuario, int id_nodo){
+    char query[1000];
+    sprintf(query, "INSERT INTO usuarionodo(ultima_conexion,id_usuario, id_nodo) VALUES(NOW(),%d, %d)", id_usuario, id_nodo);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+        //printf("Error executing query: %s\n", PQresultErrorMessage(res));
+        PQclear(res);
+        PQfinish(conn);
+        return false;
+    }
+    PQclear(res);
+    return true;
+};
+
+//Insertar una transferencia en la base de datos
+bool insertar_Transferencia(PGconn *conn, int id_archivo, int id_usuario_rec, int id_usuario_send, int id_nodo_rec, int id_nodo_send)
+{
+    char query[10000];
+    sprintf(query, "INSERT INTO transferencia(id_archivo, id_usuario_rec, id_usuario_send, id_nodo_rec, id_nodo_send) VALUES(%d, %d, %d, %d, %d)", id_archivo, id_usuario_rec, id_usuario_send, id_nodo_rec, id_nodo_send);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+        //printf("Error executing query: %s\n", PQresultErrorMessage(res));
+        PQclear(res);
+        PQfinish(conn);
+        return false;
+    }
+    PQclear(res);
+    return true;
+};
+
+//Eliminar una transferencia de la base de datos
+bool eliminar_Transferencia(PGconn *conn, int id_transferencia){
+    char query[1000];
+    sprintf(query, "DELETE FROM transferencia WHERE id = %d", id_transferencia);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+        //printf("Error executing query: %s\n", PQresultErrorMessage(res));
+        PQclear(res);
+        return false;
+    }
+    PQclear(res);
+    return true;
+};
+
+// Funcion para obtener el nombre de un usuario por su id
+char* get_nombre_usuario(PGconn *conn, int id_usuario){
+    char query[1000];
+    sprintf(query, "SELECT nombre FROM usuario WHERE id = %d", id_usuario);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        //printf("Query failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        return NULL;
+    }
+    char* nombre = malloc(strlen(PQgetvalue(res, 0, 0)) + 1); // Asignar memoria suficiente
+    if (nombre == NULL) {
+        // Manejo de error si malloc falla
+        PQclear(res);
+        return NULL;
+    }
+    strcpy(nombre, PQgetvalue(res, 0, 0)); 
+    PQclear(res); 
+    return nombre; 
+};
+
+// Funcion para obtener la IP de un nodo por su id
+char* get_ip_nodo(PGconn *conn, int id_nodo){
+    char query[1000];
+    sprintf(query, "SELECT ip_dir FROM nodo WHERE id = %d", id_nodo);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        //printf("Query failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        return NULL;
+    }
+    char* ip = malloc(strlen(PQgetvalue(res, 0, 0)) + 1); // Asignar memoria suficiente
+    if (ip == NULL) {
+        // Manejo de error si malloc falla
+        PQclear(res);
+        return NULL;
+    }
+    strcpy(ip, PQgetvalue(res, 0, 0)); 
+    PQclear(res); 
+    return ip; 
+};
+
+// Funcion para obtener el nombre de un archivo por su id
+char* get_nombre_archivo(PGconn *conn, int id_archivo){
+    char query[1000];
+    sprintf(query, "SELECT nombre FROM archivo WHERE id = %d", id_archivo);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        //printf("Query failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        return NULL;
+    }
+    char* nombre = malloc(strlen(PQgetvalue(res, 0, 0)) + 1); // Asignar memoria suficiente
+    if (nombre == NULL) {
+        // Manejo de error si malloc falla
+        PQclear(res);
+        return NULL;
+    }
+    strcpy(nombre, PQgetvalue(res, 0, 0)); 
+    PQclear(res); 
+    return nombre; 
+};
+
+Transferencia* get_transferencias(PGconn *conn, int *num_rows){
+    PGresult *res = PQexec(conn, "SELECT * FROM transferencia");
+
+    // Comprobar si la consulta fue exitosa
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        printf("Query failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        return NULL;
+    }
+
+    // Obtener el número de filas
+    *num_rows = PQntuples(res);
+
+    // Reservar memoria para el array de Transferencias
+    Transferencia *transferencias = malloc(*num_rows * sizeof(Transferencia));
+    if (transferencias == NULL) {
+        printf("Memory allocation failed\n");
+        PQclear(res);
+        return NULL;
+    }
+
+    // Llenar el array de Transferencias con los datos de la consulta
+    for (int i = 0; i < *num_rows; i++) {
+        transferencias[i].id = atoi(PQgetvalue(res, i, 0));
+        transferencias[i].id_archivo = atoi(PQgetvalue(res, i, 1));
+        transferencias[i].nombre_archivo = get_nombre_archivo(conn, transferencias[i].id_archivo);
+        transferencias[i].id_usuario_rec = atoi(PQgetvalue(res, i, 2));
+        transferencias[i].nombre_usuario_rec = get_nombre_usuario(conn, transferencias[i].id_usuario_rec);
+        transferencias[i].id_usuario_send = atoi(PQgetvalue(res, i, 3));
+        transferencias[i].nombre_usuario_send = get_nombre_usuario(conn, transferencias[i].id_usuario_send);
+        transferencias[i].id_nodo_rec = atoi(PQgetvalue(res, i, 4));
+        transferencias[i].ip_nodo_rec = get_ip_nodo(conn, transferencias[i].id_nodo_rec);
+        transferencias[i].id_nodo_send = atoi(PQgetvalue(res, i, 5));
+        transferencias[i].ip_nodo_send = get_ip_nodo(conn, transferencias[i].id_nodo_send);
+    }
+
+    // Limpiar la variable res y retornar el array de Transferencias
+    PQclear(res);
+    return transferencias;
+};
+
+
+// Nodo* get_nodo_from_id_Nodo(PGconn *conn, int id_nodo) {
+//     char query[1000];
+//     sprintf(query, "SELECT * FROM nodo WHERE id=%d", id_nodo);
+//     PGresult *res = PQexec(conn, query);
+//     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+//         //printf("Query failed: %s", PQerrorMessage(conn));
+//         PQclear(res);
+//         // Devolver un nodo "vacío" o con valores predeterminados si la consulta falla
+//         return NULL;
+//     }
+
+//     Nodo *nodo;
+//     nodo->id = atoi(PQgetvalue(res, 0, 0));
+//     strncpy(nodo->IP_dir, PQgetvalue(res, 0, 1), sizeof(nodo->IP_dir) - 1);
+//     nodo->disponibilidad = PQgetvalue(res, 0, 2)[0] == 't';
+//     nodo->ultima_actividad = strtotime(PQgetvalue(res, 0, 3)); // Convertir cadena a time_t
+//     PQclear(res);
+//     imprimirNodo(*nodo);
+//     return nodo;
+// }
+
+
+
+// // Funcion para obtener los nodos en los que un usuario está registrado
+// Nodo *get_nodos_from_usuario(PGconn *conn, int *num_rows, int id_usuario){
+//     char query[1000];
+//     sprintf(query, "SELECT id_nodo FROM usuarionodo WHERE id_usuario=%d", id_usuario);
+//     PGresult *res = PQexec(conn, query);
+//     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+//         printf("Query failed: %s", PQerrorMessage(conn));
+//         PQclear(res);
+//         return NULL;
+//     }
+
+//     *num_rows = PQntuples(res);
+//     printf("num_rows: %d\n", *num_rows);
+//     Nodo *nodos = malloc(*num_rows * sizeof(Nodo));
+//     if (nodos == NULL) {
+//         printf("Memory allocation failed\n");
+//         PQclear(res);
+//         return NULL;
+//     }
+
+//     for (int i = 0; i < *num_rows; i++) {
+//         printf("Aquiedf");
+//         nodos[i] = *get_nodo_from_id_Nodo(conn, atoi(PQgetvalue(res, i, 0)));
+//         printf("Aqui");
+//     }
+// };
+
+Nodo* get_nodo_from_id_Nodo(PGconn *conn, int id_nodo) {
+    char query[1000];
+    sprintf(query, "SELECT * FROM nodo WHERE id=%d", id_nodo);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        printf("Query failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        return NULL;
+    }
+
+    Nodo *nodo = malloc(sizeof(Nodo));
+    if (nodo == NULL) {
+        printf("Memory allocation failed\n");
+        PQclear(res);
+        return NULL;
+    }
+
+    nodo->id = atoi(PQgetvalue(res, 0, 0));
+    strncpy(nodo->IP_dir, PQgetvalue(res, 0, 1), sizeof(nodo->IP_dir) - 1);
+    nodo->disponibilidad = PQgetvalue(res, 0, 2)[0] == 't';
+    nodo->ultima_actividad = strtotime(PQgetvalue(res, 0, 3)); // Convertir cadena a time_t
+    PQclear(res);
+    imprimirNodo(*nodo);
+    return nodo;
+};
+
+Nodo *get_nodos_from_usuario(PGconn *conn, int *num_rows, int id_usuario){
+    char query[1000];
+    sprintf(query, "SELECT id_nodo FROM usuarionodo WHERE id_usuario=%d", id_usuario);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        printf("Query failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        return NULL;
+    }
+
+    *num_rows = PQntuples(res);
+    printf("num_rows: %d\n", *num_rows);
+    Nodo *nodos = malloc(*num_rows * sizeof(Nodo));
+    if (nodos == NULL) {
+        printf("Memory allocation failed\n");
+        PQclear(res);
+        return NULL;
+    }
+
+    for (int i = 0; i < *num_rows; i++) {
+        nodos[i] = *get_nodo_from_id_Nodo(conn, atoi(PQgetvalue(res, i, 0)));
+    }
+    PQclear(res);
+    return nodos;
 };

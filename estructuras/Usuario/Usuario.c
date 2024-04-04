@@ -14,3 +14,7 @@ void imprimirUsuario(Usuario usuario){
     printf("Ultimo login: %s\n", asctime(localtime(&usuario.ultimo_login)));
     printf("--------------------------------------------------------\n");
 };
+
+void imprimirUsuario2(Usuario usuario){
+    printf("ID: %d\t Nombre: %s\t Email: %s\t Fecha de registro: %s\n", usuario.id, usuario.nombre, usuario.email, asctime(localtime(&usuario.fecha_registro)));
+}

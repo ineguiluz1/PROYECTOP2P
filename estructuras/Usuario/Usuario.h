@@ -17,4 +17,6 @@ typedef struct {
 // Funcion para imprimir un usuario
 void imprimirUsuario(Usuario usuario);
 
+void imprimirUsuario2(Usuario usuario);
+
 #endif

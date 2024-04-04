@@ -7,9 +7,18 @@
 #include <libpq-fe.h>
 #include "../estructuras/Archivo/Archivo.h"
 #include "../estructuras/Usuario/Usuario.h"
+#include "../estructuras/Nodo/Nodo.h"
+#include "../estructuras/Transferencia/Transferencia.h"
 
 char nombre[20];
 char passw[20];
+
+void clearIfNeeded(char *str, int max_line)
+{
+	// Limpia los caracteres de más introducidos
+	if ((strlen(str) == max_line-1) && (str[max_line-2] != '\n'))
+		while (getchar() != '\n');
+}
 
 void initGUI(PGconn *conn)
 {
@@ -46,10 +55,9 @@ void initGUI(PGconn *conn)
             // Guardar la opcion en su variable correspondiente
             fgets(input, sizeof(input), stdin);
             sscanf(input, "%d", &opcion_ppal);
-
+            clearIfNeeded(input, sizeof(input));
             // Ejecutar la opcion
             ejecutar_opcion_ppal(conn,opcion_ppal);
-            
         }
 
     }while(opcion_inicio != 3);
@@ -62,8 +70,7 @@ void mostrar_menu_login(PGconn *conn)
     insertar_separador();
     printf("1. Iniciar Sesion\n2. Registrarse\n3. Salir\n\n");
     printf("Introduce tu opcion: \n");
-    
-    
+    fflush(stdout);
 }
 
 void insertar_separador()
@@ -102,12 +109,14 @@ void intro_credenciales(PGconn*conn, char *email, char *pass)
 
     printf("Introduce tu email: ");
     fgets(email_input, sizeof(email_input), stdin);
+    clearIfNeeded(email_input, sizeof(email_input));
 
     // Eliminar el salto de línea del final de la entrada
     email_input[strcspn(email_input, "\n")] = '\0';
 
     printf("Introduce tu contrasenya: ");
     fgets(pass_input, sizeof(pass_input), stdin);
+    clearIfNeeded(pass_input, sizeof(pass_input));
 
     // Eliminar el salto de línea del final de la entrada
     pass_input[strcspn(pass_input, "\n")] = '\0';
@@ -130,7 +139,6 @@ void intro_credenciales(PGconn*conn, char *email, char *pass)
 void intro_datos_registro(PGconn *conn) {
     // Datos para el registro
     char nombre[50];
-    char username[50];
     char email[70];
     char passw[50];
     char passw_repeat[50];
@@ -139,22 +147,22 @@ void intro_datos_registro(PGconn *conn) {
     // Peticion de datos y guardado en sus variables
     printf("Introduce tu nombre: ");
     fgets(nombre, sizeof(nombre), stdin);
+    clearIfNeeded(nombre, sizeof(nombre));
     nombre[strcspn(nombre, "\n")] = '\0';
 
     printf("Introduce tu email: ");
     fgets(email, sizeof(email), stdin);
+    clearIfNeeded(email, sizeof(email));
     email[strcspn(email, "\n")] = '\0';
-
-    printf("Introduce tu nombre de usuario: ");
-    fgets(username, sizeof(username), stdin);
-    username[strcspn(username, "\n")] = '\0';
 
     printf("Introduce tu contraseña: ");
     fgets(passw, sizeof(passw), stdin);
+    clearIfNeeded(passw, sizeof(passw));
     passw[strcspn(passw, "\n")] = '\0';
 
     printf("Repetir contraseña: ");
     fgets(passw_repeat, sizeof(passw_repeat), stdin);
+    clearIfNeeded(passw_repeat, sizeof(passw_repeat));
     passw_repeat[strcspn(passw_repeat, "\n")] = '\0';
 
     // Checkeo de las contraseñas.
@@ -164,7 +172,7 @@ void intro_datos_registro(PGconn *conn) {
     }
 
     //! Introducir la funcion para el registro del usuario
-    registrar_usuario2(conn, username, email, passw);
+    registrar_usuario2(conn, nombre, email, passw);
 }
 
 void mostrar_menu_ppal(PGconn *conn)
@@ -173,10 +181,11 @@ void mostrar_menu_ppal(PGconn *conn)
     insertar_separador();
     printf("\nMENU PRINCIPAL\n\n");
     insertar_separador();
-    printf("1. Gestion de nodos P2P\n2. Gestion de archivos\n3. Datos de las transferencias"
-    "\n4. Visualizar usuarios\n5. Explorar archivos\n6. Limpiar la BD\n7. Salir\n\n");
+    printf("1. Gestion de nodos P2P\n2. Gestion de archivos\n3. Gestion de transferencias"
+    "\n4. Explorar usuarios\n5. Limpiar la BD\n6. Visualizacion completa\n7. Salir\n\n");
     printf("Introduce una opcion: \n");
     insertar_separador();
+    fflush(stdout);
 }
 
 void clear_prompt()
@@ -184,47 +193,9 @@ void clear_prompt()
     system("cls");
 }
 
-void ejecutar_opcion_ppal( PGconn *conn,int opcion )
-{
-    switch(opcion)
-    {
-        // Caso de gestion de nodos
-        case 1:
-            mostrar_menu_nodos();
-            break;
-        // Caso de gestion de archivos
-        case 2:
-            mostrar_menu_archivos(conn);
-            break;
-        // Caso de muestra de transferencias
-        case 3:
-            mostrar_transferencias();
-            break;
-        // Caso busqueda de usuarios
-        case 4:
-            mostrar_explorador_usuarios();
-            break;
-        // Caso busqueda de archivos
-        case 5:
-            mostrar_explorador_archivos();
-            break;
-        // Limpieza de la base de datos
-        case 6:
-            limpiarBD(conn);
-            break;
-        // Salir
-        case 7:
-            clear_prompt();
-            exit(0);
-            break;
-        default:
-            printf("Intentalo de nuevo.\n");
-            break;
 
-    }
-}
 
-void mostrar_menu_nodos()
+void mostrar_menu_nodos(PGconn *conn)
 {
     char input[2];
     int opcion; 
@@ -233,20 +204,117 @@ void mostrar_menu_nodos()
     insertar_separador();
     printf("MENU DE GESTION DE NODOS\n");
     insertar_separador();
-    printf("1. Anyadir nodo\n2. Eliminar nodo\n3. Visualizar nodos\n\n");
+    printf("1. Crear nodo\n2. Eliminar nodo\n3. Visualizar nodos\n4. Anyadir nodo a usuario\n5. Volver\n\n");
     printf("Introduce tu opcion: \n\n");
-
+    fflush(stdout);
     fgets(input, sizeof(input), stdin);
     sscanf(input,"%d", &opcion);
+    clearIfNeeded(input, sizeof(input));
 
     switch(opcion)
     {
         case 1:
+        {   
+            char input[255];
+            char dir_ip[255];
+            char input_id[10];
+            int id_usuario;
+            printf("Introduce la direccion IP del nodo: \n\n");
+            fflush(stdout);
+            fgets(input, sizeof(input), stdin);
+            clearIfNeeded(input, sizeof(input));
+            input[strcspn(input, "\n")] = '\0';
+            strcpy(dir_ip, input);
 
+            printf("Introce el id del usuario: \n\n");
+            fflush(stdout);
+            fgets(input_id, sizeof(input_id), stdin);
+            sscanf(input_id, "%i", &id_usuario);
+            clearIfNeeded(input_id, sizeof(input_id));
+
+            if(!insertar_Nodo2(conn, dir_ip, id_usuario)){
+                printf("Error al insertar el nodo.\n");
+                fflush(stdout);
+            }else{
+                printf("Nodo anyadido con exito\n");
+                fflush(stdout);
+            }
+            printf("Pulsa Enter para salir...\n");
+            fflush(stdout);
+            while(getchar() != '\n');
+            break;
+        }
         case 2:
-
+        {
+            int id;
+            char input_id[10];
+            printf("Introduce el id del nodo que deseas eliminar: \n\n");
+            fflush(stdout);
+            fgets(input_id, sizeof(input_id), stdin);
+            sscanf(input_id, "%i", &id);
+            clearIfNeeded(input_id, sizeof(input_id));
+            if(!eliminar_Nodo(conn, id)){
+                printf("Error al eliminar nodo\n");
+                fflush(stdout);
+            }else{
+                printf("Nodo con id = %i eliminado con exito\n");
+                fflush(stdout);
+            }
+            printf("Pulsa Enter para salir...\n");
+            fflush(stdout);
+            while(getchar() != '\n');
+            break;
+        }
         case 3:
+        {   
+            int nrows = 0;
+            Nodo *nodos = get_nodos(conn,&nrows);
+            for(int i = 0; i<nrows; i++)
+            {
+                imprimirNodo(nodos[i]);
+            }
+            free(nodos);
+            printf("\nPulsa Enter para salir...\n");
+            fflush(stdout);
+            while(getchar() != '\n');
+            break;
+        }
+        case 4:
+        {   
+            char input_nodo[10];
+            int id_nodo;
+            char input_id[10];
+            int id_usuario;
 
+            printf("Introduce ID del nodo: \n\n");
+            fflush(stdout);
+            fgets(input_nodo, sizeof(input_nodo), stdin);
+            sscanf(input_nodo, "%i", &id_nodo);
+            clearIfNeeded(input_nodo, sizeof(input_nodo));
+
+            printf("Introce el ID del usuario: \n\n");
+            fflush(stdout);
+            fgets(input_id, sizeof(input_id), stdin);
+            sscanf(input_id, "%i", &id_usuario);
+            clearIfNeeded(input_id, sizeof(input_id));
+
+            if(!anyadir_usuario_nodo(conn, id_usuario, id_nodo)){
+                printf("Error al anyadir el usuario al nodo.\n");
+                fflush(stdout);
+            }else{
+                printf("Usuario anyadido al nodo con exito. \n");
+                fflush(stdout);
+            }
+
+            printf("\nPulsa Enter para salir...\n");
+            fflush(stdout);
+            while(getchar() != '\n');
+            break;
+        }
+        case 5:
+            break;
+        default:
+            break;
     }
 
 }
@@ -260,15 +328,16 @@ void mostrar_menu_archivos(PGconn *conn)
     insertar_separador();
     printf("MENU DE GESTION DE ARCHIVOS\n");
     insertar_separador();
-    printf("1. Anyadir archivos\n2. Eliminar archivos\n3. Visualizar archivos\n\n");
+    printf("1. Anyadir archivos\n2. Eliminar archivos\n3. Visualizar todos los archivos\n4. Busqueda de archivos por nombre\n5. Volver\n\n");
     printf("Introduce tu opcion: \n\n");
-
+    fflush(stdout);
     fgets(input, sizeof(input), stdin);
     sscanf(input,"%d", &opcion);
-
+    clearIfNeeded(input, sizeof(input));
     switch(opcion)
     {
         case 1:
+        {
             char input[50];
             char nombre[50];
             long tamanyo;
@@ -277,84 +346,315 @@ void mostrar_menu_archivos(PGconn *conn)
             time_t fecha_subida;
 
             printf("Introduce el nombre del archivo: \n\n");
+            fflush(stdout);
             fgets(nombre, sizeof(nombre), stdin);
+            clearIfNeeded(nombre, sizeof(nombre));
             nombre[strcspn(nombre, "\n")] = '\0';
 
             printf("Introduce el tamanyo del archivo: \n\n");
+            fflush(stdout);
             fgets(input, sizeof(input), stdin);
-            sscanf(input, "%d", tamanyo);
+            sscanf(input, "%ld", &tamanyo);
+            clearIfNeeded(input, sizeof(input));
 
-            printf("Introduce el tipo de archivo: ");
+            printf("Introduce el tipo de archivo: \n\n");
+            fflush(stdout);
             fgets(tipo, sizeof(tipo), stdin);
+            clearIfNeeded(tipo, sizeof(tipo));
             tipo[strcspn(tipo, "\n")] = '\0';
 
-            printf("Introduce el tipo del archivo: \n\n");
+            printf("Introduce el id del usuario propietario: \n\n");
+            fflush(stdout);
             fgets(input, sizeof(input), stdin);
-            sscanf(input, "%d", id_usuario);
+            sscanf(input, "%i", &id_usuario);
+            clearIfNeeded(input, sizeof(input));
 
-            if(!insertar_Archivo(conn, nombre, tamanyo, tipo, fecha_subida, id_usuario))printf("Error al subir el archivo.\n");
-            
+            if(!insertar_Archivo(conn, nombre, tamanyo, tipo, fecha_subida, id_usuario)){
+                printf("Error al subir el archivo.\n");
+                fflush(stdout);
+            }
+            break;
+        }
         case 2:
+        {
             int id;
             char input_id[10];
             printf("Introduce el id del archivo que deseas eliminar: \n\n");
-
+            fflush(stdout);
             fgets(input_id, sizeof(input_id), stdin);
-            sscanf(input_id, "%d", id);
-
-            if(!eliminar_Archivo(conn, id))printf("Error al imprimir archivo,\n\n");
+            sscanf(input_id, "%i", &id);
+            clearIfNeeded(input_id, sizeof(input_id));
+            if(!eliminar_Archivo(conn, id)){
+                printf("Error al eliminar archivo");
+                fflush(stdout);
+            }else{
+                printf("Archivo con id = %i eliminado con exito\n");
+                fflush(stdout);
+            }
+            printf("Pulsa Enter para salir...\n");
+            fflush(stdout);
+            while(getchar() != '\n');
+            break;
+        }
         case 3:
-            /*Archivo *archivos = get_archivos(conn,5);
-            for(int i = 0; i<5; i++)
+        {   
+            int nrows = 0;
+            Archivo *archivos = get_archivos(conn,&nrows);
+            for(int i = 0; i<nrows; i++)
             {
                 imprimirArchivo(archivos[i]);
-            }*/
+            }
+            free(archivos);
+            printf("\nPulsa Enter para salir...\n");
+            fflush(stdout);
+            while(getchar() != '\n');
+            break;
+        }
+            
+        case 4:
+        {
+            char input_archivo[20];
+            char archivo[20];
 
+            insertar_separador();
+            fflush(stdout);
+            printf("\nIntroduce el usuario que deseas buscar: \n");
+            fflush(stdout);
+            clearIfNeeded(input_archivo, sizeof(input_archivo));
+            fgets(input_archivo, sizeof(input_archivo), stdin);
+            input_archivo[strcspn(input_archivo, "\n")] = '\0';
+            clearIfNeeded(input_archivo, sizeof(input_archivo));
+            strcpy(archivo, input_archivo);
+            printf("Busqueda de %s:\n", archivo);
+            mostrar_animacion("Buscando");
+            fflush(stdout);
+            int num_rows = 0;
+            Archivo *archivos = busqueda_archivos_nombre(conn, archivo, &num_rows);
+            if (archivos == NULL || num_rows == 0) {
+                printf("No se encontraron usuarios con ese nombre.\n");
+                fflush(stdout);
+            } else {
+                for (int i = 0; i < num_rows; ++i) {
+                    imprimirArchivo(archivos[i]);
+                }
+                fflush(stdout);
+                free(archivos);
+            }
+            
+
+            printf("Pulsa Enter para salir...\n");
+            fflush(stdout);
+            while(getchar() != '\n');
+            break;
+        }
+        case 5:
+            break;
+        default:
+            break;
     }
 
 
 }
 
-void mostrar_transferencias()
+void mostrar_transferencias(PGconn *conn)
 {
-    //! Anyadir el codigo para imprimir las transferencias salvadas de la base de datos.
+    char input[2];
+    int opcion; 
+
+    clear_prompt();
+    insertar_separador();
+    printf("MENU DE GESTION DE TRANSFERENCIAS\n");
+    insertar_separador();
+    printf("1. Anyadir transferencia\n2. Eliminar transferencia\n3. Visualizar todas las transferencias\n4. Volver\n\n");
+    printf("Introduce tu opcion: \n\n");
+    fflush(stdout);
+    fgets(input, sizeof(input), stdin);
+    sscanf(input,"%d", &opcion);
+    clearIfNeeded(input, sizeof(input));
+    switch(opcion)
+    {
+        case 1:
+        {   
+            char input[10];
+            int id_archivo;
+            int id_usuario_rec;
+            int id_nodo_rec;
+            int id_usuario_send;
+            int id_nodo_send;
+
+            printf("Introduce el id del archivo: \n\n");
+            fflush(stdout);
+            fgets(input, sizeof(input), stdin);
+            sscanf(input, "%i", &id_archivo);
+            clearIfNeeded(input, sizeof(input));
+
+            printf("Introduce el id del usuario receptor: \n\n");
+            fflush(stdout);
+            fgets(input, sizeof(input), stdin);
+            sscanf(input, "%i", &id_usuario_rec);
+            clearIfNeeded(input, sizeof(input));
+
+            printf("Introduce el id del nodo receptor: \n\n");
+            fflush(stdout);
+            fgets(input, sizeof(input), stdin);
+            sscanf(input, "%i", &id_nodo_rec);
+            clearIfNeeded(input, sizeof(input));
+
+            printf("Introduce el id del usuario emisor: \n\n");
+            fflush(stdout);
+            fgets(input, sizeof(input), stdin);
+            sscanf(input, "%i", &id_usuario_send);
+            clearIfNeeded(input, sizeof(input));
+
+            printf("Introduce el id del nodo emisor: \n\n");
+            fflush(stdout);
+            fgets(input, sizeof(input), stdin);
+            sscanf(input, "%i", &id_nodo_send);
+            clearIfNeeded(input, sizeof(input));
+
+            if(!insertar_Transferencia(conn, id_archivo, id_usuario_rec, id_usuario_send, id_nodo_rec, id_nodo_send)){
+                printf("Error al insertar la transferencia.\n");
+                fflush(stdout);
+            }else{
+                printf("Transferencia anyadida con exito\n");
+                fflush(stdout);
+            }
+
+            printf("Pulsa Enter para salir...\n");
+            fflush(stdout);
+            while(getchar() != '\n');
+            break;
+        }
+        case 2:
+        {   
+            char input[10];
+            int id_transferencia;
+
+            printf("Introduce el id de la transferencia que deseas eliminar: \n\n");
+            fflush(stdout);
+            fgets(input, sizeof(input), stdin);
+            sscanf(input, "%i", &id_transferencia);
+            clearIfNeeded(input, sizeof(input));
+
+            if(!eliminar_Transferencia(conn, id_transferencia)){
+                printf("Error al eliminar la transferencia.\n");
+                fflush(stdout);
+            }else{
+                printf("Transferencia eliminada con exito\n");
+                fflush(stdout);
+            }
+
+            printf("Pulsa Enter para salir...\n");
+            fflush(stdout);
+            while(getchar() != '\n');
+            break;
+        }
+        case 3:
+        {
+            int nrows = 0;
+            Transferencia *transferencias = get_transferencias(conn,&nrows);
+            for(int i = 0; i<nrows; i++)
+            {
+                imprimirTransferencia(transferencias[i]);
+            }
+
+            for(int i = 0; i<nrows; i++){
+                free(transferencias[i].nombre_archivo);
+                free(transferencias[i].nombre_usuario_rec);
+                free(transferencias[i].nombre_usuario_send);
+                free(transferencias[i].ip_nodo_rec);
+                free(transferencias[i].ip_nodo_send);
+            }
+            free(transferencias);
+
+            printf("Pulsa Enter para salir...\n");
+            fflush(stdout);
+            while(getchar() != '\n');
+            break;
+        }
+        case 4:
+            break;
+        default:
+            break;
+    }
 }
 
-void mostrar_explorador_usuarios()
+void mostrar_explorador_usuarios(PGconn *conn)
 {
     // Nombr del usuariio buscado
-    char input[20];
-    char usuario[20];
+    char input[2];
+    int opcion; 
 
-    mostrar_animacion("Preparando el buscador");
-
+    clear_prompt();
     insertar_separador();
-    printf("\nIntroduce el usuario que deseas buscar: \n");
-    fgets(input, sizeof(input), stdin);
-    strcpy(usuario, input);
-
-    printf("Estas buscando %s", usuario);
-
-    //! Añadir la funcion para la busqueda de personas.
-    
-}
-
-void mostrar_explorador_archivos()
-{
-
-    // Nombr del usuariio buscado
-    char input[20];
-    char archivo[20];
-
+    clear_prompt();
     insertar_separador();
-    printf("\nIntroduce el archivo que deseas buscar: \n");
+    printf("MENU DE EXPLORACION DE USUARIOS\n");
+    insertar_separador();
+    printf("1. Visualizar todos los usuarios\n2. Buscar usuarios por nombre\n3. Volver\n\n");
+    printf("Introduce tu opcion: \n\n");
+    fflush(stdout);
     fgets(input, sizeof(input), stdin);
-    strcpy(archivo, input);
+    sscanf(input,"%d", &opcion);
+    clearIfNeeded(input, sizeof(input));
+    switch(opcion)
+    {
+        case 1:
+        {
+            int nrows = 0;
+            Usuario *usuarios = get_usuarios(conn,&nrows);
+            for(int i = 0; i<nrows; i++)
+            {
+                imprimirUsuario(usuarios[i]);
+            }
+            free(usuarios);
+            printf("\nPulsa Enter para salir...\n");
+            fflush(stdout);
+            while(getchar() != '\n');
+            break;
+        }
+        case 2:
+        {
+            char input_usuario[20];
+            char usuario[20];
 
-    printf("Estas buscando %s", archivo);
+            insertar_separador();
+            fflush(stdout);
+            printf("\nIntroduce el usuario que deseas buscar: \n");
+            fflush(stdout);
+            clearIfNeeded(input_usuario, sizeof(input_usuario));
+            fgets(input_usuario, sizeof(input_usuario), stdin);
+            input_usuario[strcspn(input_usuario, "\n")] = '\0';
+            clearIfNeeded(input_usuario, sizeof(input_usuario));
+            strcpy(usuario, input_usuario);
+            printf("Busqueda de %s:\n", usuario);
+            mostrar_animacion("Buscando");
+            fflush(stdout);
+            //! Añadir la funcion para la busqueda de personas.
+            int num_rows = 0;
+            Usuario *usuarios = busqueda_usuarios_nombre(conn, usuario, &num_rows);
+            if (usuarios == NULL || num_rows == 0) {
+                printf("No se encontraron usuarios con ese nombre.\n");
+                fflush(stdout);
+            } else {
+                for (int i = 0; i < num_rows; ++i) {
+                    imprimirUsuario(usuarios[i]);
+                }
+                fflush(stdout);
+                free(usuarios);
+            }
+            
 
-    //! Añadir la funcion para la busqueda de archivos.
-
+            printf("Pulsa Enter para salir...\n");
+            fflush(stdout);
+            while(getchar() != '\n');
+            break;
+        }
+        case 3:
+            break;
+        default:
+            break;
+    }
 }
 
 // Definición de la función mostrar_animacion
@@ -380,4 +680,89 @@ void mostrar_animacion( char* Texto ) {
         fflush(stdout);
     }
     printf("\n"); // Agregar una nueva línea al final de la animación
+}
+
+void visualizacion_completa(PGconn *conn)
+{
+    printf("VISUALIZACION COMPLETA POR USUARIOS\n");
+    printf("=====================================\n");
+    int nrows = 0;
+    Usuario *usuarios = get_usuarios(conn,&nrows);
+    for(int i = 0; i<nrows; i++)
+    {   
+        imprimirUsuario2(usuarios[i]);
+        printf("Nodos: \n");
+        int nrow2 = 0;
+        Nodo *nodos = get_nodos_from_usuario(conn,&nrow2,usuarios[i].id);
+        for(int j = 0; j<nrow2; j++)
+        {
+            imprimirNodo(nodos[j]);
+        }
+        free(nodos);
+    }
+    printf("Pulsa Enter para salir...\n");
+    fflush(stdout);
+    while(getchar() != '\n');
+}
+
+// void visualizacion_completa(PGconn *conn)
+// {
+//     printf("VISUALIZACION COMPLETA POR USUARIOS\n");
+//     printf("=====================================\n");
+//     int nrows = 0;
+//     Usuario *usuarios = get_usuarios(conn, &nrows);
+//     for(int i = 0; i < nrows; i++)
+//     {   
+//         imprimirUsuario2(usuarios[i]);
+//         printf("Nodos: \n");
+//         int nrow2 = 0;
+//         Nodo *nodos = get_nodos_from_usuario(conn, &nrow2, usuarios[i].id);
+//         for(int j = 0; j < nrow2; j++)
+//         {
+//             imprimirNodo(nodos[j]);
+//         }
+//         free(nodos);
+//     }
+//     printf("Pulsa Enter para salir...\n");
+//     fflush(stdout);
+//     while(getchar() != '\n');
+// }
+
+void ejecutar_opcion_ppal( PGconn *conn,int opcion )
+{
+    switch(opcion)
+    {
+        // Caso de gestion de nodos
+        case 1:
+            mostrar_menu_nodos(conn);
+            break;
+        // Caso de gestion de archivos
+        case 2:
+            mostrar_menu_archivos(conn);
+            break;
+        // Caso de muestra de transferencias
+        case 3:
+            mostrar_transferencias(conn);
+            break;
+        // Caso busqueda de usuarios
+        case 4:
+            mostrar_explorador_usuarios(conn);
+            break;
+        // Limpieza de la base de datos
+        case 5:
+            limpiarBD(conn);
+            break;
+        // Visualizar toda la informacion de la base de datos, por usuarios
+        case 6:
+            visualizacion_completa(conn);
+            break;
+        // Salir
+        case 7:
+            clear_prompt();
+            exit(0);
+            break;
+        default:
+            printf("Intentalo de nuevo.\n");
+            break;
+    }
 }

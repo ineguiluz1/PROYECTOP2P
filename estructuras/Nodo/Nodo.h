@@ -1,12 +1,16 @@
 #ifndef NODO_H
 #define NODO_H
 #include <stdbool.h>
+#include <time.h>
 
 typedef struct
 {
-    char* IP_dir;
+    int id;
+    char IP_dir[255];
     bool disponibilidad;
-    char* ultima_vez;
+    time_t ultima_actividad;
 
 }Nodo;
+
+void imprimirNodo(Nodo nodo);
 #endif

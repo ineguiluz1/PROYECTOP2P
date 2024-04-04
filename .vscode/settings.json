@@ -4,6 +4,9 @@
         "time.h": "c",
         "archivo.h": "c",
         "usuario.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "libpq-fe.h": "c",
+        "windows.h": "c",
+        "transferencia.h": "c"
     }
 }

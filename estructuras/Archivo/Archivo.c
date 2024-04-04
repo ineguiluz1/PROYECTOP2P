@@ -20,7 +20,7 @@ void imprimirArchivo(Archivo archivo){
     printf("Nombre: %s\n", archivo.nombre);
     printf("Tamanyo: %ld\n", archivo.tamanyo);
     printf("Tipo: %s\n", archivo.tipo);
-    printf("Fecha de subida: %s\n", asctime(localtime(&archivo.fecha_subida)));
+    printf("Fecha de subida: %s", asctime(localtime(&archivo.fecha_subida)));
     printf("ID Usuario: %d\n", archivo.id_usuario);
     printf("--------------------------------------------------------\n");
 };
