@@ -13,3 +13,9 @@ void imprimirNodo(Nodo nodo){
     printf("Ultima actividad: %s", asctime(localtime(&nodo.ultima_actividad)));
     printf("--------------------------------------------------------\n");
 };
+
+void imprimirNodo2(Nodo nodo){
+    //printf("\tNodo:\n");
+    printf("\tID: %d\tIP: %s\tDisponibilidad: %s\tUltima actividad: %s\n", nodo.id,nodo.IP_dir,nodo.disponibilidad ? "Disponible" : "No disponible",asctime(localtime(&nodo.ultima_actividad)));
+    printf("\t--------------------------------------------------------\n");
+}

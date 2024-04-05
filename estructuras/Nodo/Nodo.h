@@ -13,4 +13,6 @@ typedef struct
 }Nodo;
 
 void imprimirNodo(Nodo nodo);
+void imprimirNodo2(Nodo nodo);
+
 #endif

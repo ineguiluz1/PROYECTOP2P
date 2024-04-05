@@ -690,7 +690,6 @@ Nodo* get_nodo_from_id_Nodo(PGconn *conn, int id_nodo) {
     nodo->disponibilidad = PQgetvalue(res, 0, 2)[0] == 't';
     nodo->ultima_actividad = strtotime(PQgetvalue(res, 0, 3)); // Convertir cadena a time_t
     PQclear(res);
-    imprimirNodo(*nodo);
     return nodo;
 };
 
@@ -699,16 +698,15 @@ Nodo *get_nodos_from_usuario(PGconn *conn, int *num_rows, int id_usuario){
     sprintf(query, "SELECT id_nodo FROM usuarionodo WHERE id_usuario=%d", id_usuario);
     PGresult *res = PQexec(conn, query);
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        printf("Query failed: %s", PQerrorMessage(conn));
+        //printf("Query failed: %s", PQerrorMessage(conn));
         PQclear(res);
         return NULL;
     }
 
     *num_rows = PQntuples(res);
-    printf("num_rows: %d\n", *num_rows);
     Nodo *nodos = malloc(*num_rows * sizeof(Nodo));
     if (nodos == NULL) {
-        printf("Memory allocation failed\n");
+        //printf("Memory allocation failed\n");
         PQclear(res);
         return NULL;
     }
@@ -719,3 +717,73 @@ Nodo *get_nodos_from_usuario(PGconn *conn, int *num_rows, int id_usuario){
     PQclear(res);
     return nodos;
 };
+
+
+
+// Funcion para obtener los archivos de un usuario
+Archivo *get_archivos_from_usuario(PGconn *conn, int *num_rows, int id_usuario){
+    char query[1000];
+    sprintf(query, "SELECT * FROM archivo WHERE id_usuario=%d", id_usuario);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        //printf("Query failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        return NULL;
+    }
+
+    *num_rows = PQntuples(res);
+    Archivo *archivos = malloc(*num_rows * sizeof(Archivo));
+    if (archivos == NULL) {
+        //printf("Memory allocation failed\n");
+        PQclear(res);
+        return NULL;
+    }
+
+    for (int i = 0; i < *num_rows; i++) {
+        archivos[i].id = atoi(PQgetvalue(res, i, 0));
+        strncpy(archivos[i].nombre, PQgetvalue(res, i, 1), sizeof(archivos[i].nombre) - 1);
+        archivos[i].tamanyo = atol(PQgetvalue(res, i, 2));
+        strncpy(archivos[i].tipo, PQgetvalue(res, i, 3), sizeof(archivos[i].tipo) - 1);
+        archivos[i].fecha_subida = strtotime(PQgetvalue(res, i, 4)); // Convertir cadena a time_t
+        archivos[i].id_usuario = atoi(PQgetvalue(res, i, 5));
+    }
+    PQclear(res);
+    return archivos;
+};
+
+// Funcion para obtener las transferencias de un usuario
+Transferencia *get_transferencias_from_usuario(PGconn *conn, int *num_rows, int id_usuario){
+    char query[1000];
+    sprintf(query, "SELECT * FROM transferencia WHERE id_usuario_rec=%d OR id_usuario_send=%d", id_usuario, id_usuario);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        //printf("Query failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        return NULL;
+    }
+
+    *num_rows = PQntuples(res);
+    Transferencia *transferencias = malloc(*num_rows * sizeof(Transferencia));
+    if (transferencias == NULL) {
+        //printf("Memory allocation failed\n");
+        PQclear(res);
+        return NULL;
+    }
+
+    for (int i = 0; i < *num_rows; i++) {
+        transferencias[i].id = atoi(PQgetvalue(res, i, 0));
+        transferencias[i].id_archivo = atoi(PQgetvalue(res, i, 1));
+        transferencias[i].nombre_archivo = get_nombre_archivo(conn, transferencias[i].id_archivo);
+        transferencias[i].id_usuario_rec = atoi(PQgetvalue(res, i, 2));
+        transferencias[i].nombre_usuario_rec = get_nombre_usuario(conn, transferencias[i].id_usuario_rec);
+        transferencias[i].id_usuario_send = atoi(PQgetvalue(res, i, 3));
+        transferencias[i].nombre_usuario_send = get_nombre_usuario(conn, transferencias[i].id_usuario_send);
+        transferencias[i].id_nodo_rec = atoi(PQgetvalue(res, i, 4));
+        transferencias[i].ip_nodo_rec = get_ip_nodo(conn, transferencias[i].id_nodo_rec);
+        transferencias[i].id_nodo_send = atoi(PQgetvalue(res, i, 5));
+        transferencias[i].ip_nodo_send = get_ip_nodo(conn, transferencias[i].id_nodo_send);
+    }
+    PQclear(res);
+    return transferencias;
+};
+

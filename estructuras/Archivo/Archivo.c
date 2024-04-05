@@ -24,3 +24,9 @@ void imprimirArchivo(Archivo archivo){
     printf("ID Usuario: %d\n", archivo.id_usuario);
     printf("--------------------------------------------------------\n");
 };
+
+void imprimirArchivo2(Archivo archivo){
+    //printf("\tArchivo:\n");
+    printf("\tID: %d\tNombre: %s\tTamanyo: %ld\tTipo: %s\tFecha de subida: %s\tID Usuario: %d\n", archivo.id,archivo.nombre,archivo.tamanyo,archivo.tipo,asctime(localtime(&archivo.fecha_subida)),archivo.id_usuario);
+    printf("\t--------------------------------------------------------\n");
+}

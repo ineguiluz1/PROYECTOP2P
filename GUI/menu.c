@@ -20,18 +20,57 @@ void clearIfNeeded(char *str, int max_line)
 		while (getchar() != '\n');
 }
 
-void initGUI(PGconn *conn)
-{
-        /* code */
+// void initGUI(PGconn *conn)
+// {
+//         /* code */
+//     char input[10];
+//     int opcion_inicio;
+//     int opcion_ppal;
+//     bool sesion_iniciada = 0;
+
+//     do{
+//         if(!sesion_iniciada)
+//         {
+//             // Mostrar el primer menu
+//             mostrar_menu_login(conn);
+//             insertar_separador();
+
+//             // Guardar la opcion
+//             fgets(input, sizeof(input), stdin);
+//             sscanf(input, "%d", &opcion_inicio);
+
+//             // Ejecuta la opcion
+//             ejecutar_opcion_inicio(conn,opcion_inicio);
+
+//             if(opcion_inicio == 1 || opcion_inicio == 2)
+//             {
+//                 sesion_iniciada = 1;
+//             }
+
+//         }else{
+            
+//             // Mostrar el menu principal de la app
+//             mostrar_menu_ppal(conn);
+
+//             // Guardar la opcion en su variable correspondiente
+//             fgets(input, sizeof(input), stdin);
+//             sscanf(input, "%d", &opcion_ppal);
+//             clearIfNeeded(input, sizeof(input));
+//             // Ejecutar la opcion
+//             ejecutar_opcion_ppal(conn,opcion_ppal);
+//         }
+
+//     }while(opcion_inicio != 3);
+// }
+
+void initGUI(PGconn *conn){
+    //         /* code */
     char input[10];
     int opcion_inicio;
     int opcion_ppal;
-    int sesion_iniciada = 0;
-
+    bool sesion_iniciada = 0;
     do{
-        if(!sesion_iniciada)
-        {
-        // Mostrar el primer menu
+        clear_prompt();
         mostrar_menu_login(conn);
         insertar_separador();
 
@@ -41,25 +80,6 @@ void initGUI(PGconn *conn)
 
         // Ejecuta la opcion
         ejecutar_opcion_inicio(conn,opcion_inicio);
-
-        if(opcion_inicio == 1 || opcion_inicio == 2)
-        {
-            sesion_iniciada = 1;
-        }
-
-        }else{
-            
-            // Mostrar el menu principal de la app
-            mostrar_menu_ppal(conn);
-
-            // Guardar la opcion en su variable correspondiente
-            fgets(input, sizeof(input), stdin);
-            sscanf(input, "%d", &opcion_ppal);
-            clearIfNeeded(input, sizeof(input));
-            // Ejecutar la opcion
-            ejecutar_opcion_ppal(conn,opcion_ppal);
-        }
-
     }while(opcion_inicio != 3);
 }
 
@@ -108,6 +128,7 @@ void intro_credenciales(PGconn*conn, char *email, char *pass)
     char pass_input[20];
 
     printf("Introduce tu email: ");
+    fflush(stdout);
     fgets(email_input, sizeof(email_input), stdin);
     clearIfNeeded(email_input, sizeof(email_input));
 
@@ -115,6 +136,7 @@ void intro_credenciales(PGconn*conn, char *email, char *pass)
     email_input[strcspn(email_input, "\n")] = '\0';
 
     printf("Introduce tu contrasenya: ");
+    fflush(stdout);
     fgets(pass_input, sizeof(pass_input), stdin);
     clearIfNeeded(pass_input, sizeof(pass_input));
 
@@ -131,8 +153,14 @@ void intro_credenciales(PGconn*conn, char *email, char *pass)
     strcpy(email, email_input);
     strcpy(pass, pass_input);
 
-    //! Anyadir metodo para checkear las credenciales
-    if(!autenticar_usuario(conn, email, pass))exit(0);
+    if(autenticar_usuario(conn, email, pass)){
+        mostrar_menu_ppal(conn);
+    }else{
+        printf("Usuario o contrasenya incorrecta\n");
+        printf("Pulsa Enter para reintentar...\n");
+        fflush(stdout);
+        while(getchar() != '\n');
+    }
 
 }
 
@@ -171,12 +199,34 @@ void intro_datos_registro(PGconn *conn) {
         return;
     }
 
-    //! Introducir la funcion para el registro del usuario
-    registrar_usuario2(conn, nombre, email, passw);
+    if(registrar_usuario2(conn, nombre, email, passw)){
+        mostrar_menu_ppal(conn);
+    }else{
+        printf("Error al registrar el usuario\n");
+        printf("Pulsa Enter para reintentar...\n");
+        fflush(stdout);
+        while(getchar() != '\n');
+    }
 }
 
+
+// void mostrar_menu_ppal(PGconn *conn)
+// {   
+//     clear_prompt();
+//     insertar_separador();
+//     printf("\nMENU PRINCIPAL\n\n");
+//     insertar_separador();
+//     printf("1. Gestion de nodos P2P\n2. Gestion de archivos\n3. Gestion de transferencias"
+//     "\n4. Explorar usuarios\n5. Limpiar la BD\n6. Visualizacion completa\n7. Salir\n\n");
+//     printf("Introduce una opcion: \n");
+//     insertar_separador();
+//     fflush(stdout);
+// }
+
 void mostrar_menu_ppal(PGconn *conn)
-{
+{   do{
+    char input[2];
+    int opcion_ppal;
     clear_prompt();
     insertar_separador();
     printf("\nMENU PRINCIPAL\n\n");
@@ -186,6 +236,12 @@ void mostrar_menu_ppal(PGconn *conn)
     printf("Introduce una opcion: \n");
     insertar_separador();
     fflush(stdout);
+    fgets(input, sizeof(input), stdin);
+    sscanf(input, "%d", &opcion_ppal);
+    clearIfNeeded(input, sizeof(input));
+    // Ejecutar la opcion
+    ejecutar_opcion_ppal(conn,opcion_ppal);
+    }while(1);
 }
 
 void clear_prompt()
@@ -418,7 +474,7 @@ void mostrar_menu_archivos(PGconn *conn)
 
             insertar_separador();
             fflush(stdout);
-            printf("\nIntroduce el usuario que deseas buscar: \n");
+            printf("\nIntroduce el archivo que deseas buscar: \n");
             fflush(stdout);
             clearIfNeeded(input_archivo, sizeof(input_archivo));
             fgets(input_archivo, sizeof(input_archivo), stdin);
@@ -431,7 +487,7 @@ void mostrar_menu_archivos(PGconn *conn)
             int num_rows = 0;
             Archivo *archivos = busqueda_archivos_nombre(conn, archivo, &num_rows);
             if (archivos == NULL || num_rows == 0) {
-                printf("No se encontraron usuarios con ese nombre.\n");
+                printf("No se encontraron archivos con ese nombre.\n");
                 fflush(stdout);
             } else {
                 for (int i = 0; i < num_rows; ++i) {
@@ -691,42 +747,43 @@ void visualizacion_completa(PGconn *conn)
     for(int i = 0; i<nrows; i++)
     {   
         imprimirUsuario2(usuarios[i]);
-        printf("Nodos: \n");
         int nrow2 = 0;
         Nodo *nodos = get_nodos_from_usuario(conn,&nrow2,usuarios[i].id);
-        for(int j = 0; j<nrow2; j++)
+        int j = 0;
+        printf("\tNodos:\n");
+        for(j = 0; j<nrow2; j++)
         {
-            imprimirNodo(nodos[j]);
+            imprimirNodo2(nodos[j]);
         }
         free(nodos);
+        int nrow3 = 0;
+        Archivo *archivos = get_archivos_from_usuario(conn,&nrow3,usuarios[i].id);
+        if (nrow3 > 0) {
+            printf("\tArchivos:\n");
+        }
+        for(j = 0; j<nrow3; j++)
+        {
+            imprimirArchivo2(archivos[j]);
+        }
+        free(archivos);
+        
+        int nrows4 = 0;
+        Transferencia *transferencias = get_transferencias(conn,&nrows4);
+        if (nrows4 > 0) {
+            printf("\tTransferencias:\n");
+        }
+        for(j = 0; j<nrows4; j++)
+        {
+            imprimirTransferencia2(transferencias[j]);
+        }  
+        free(transferencias);
+
     }
     printf("Pulsa Enter para salir...\n");
     fflush(stdout);
     while(getchar() != '\n');
 }
 
-// void visualizacion_completa(PGconn *conn)
-// {
-//     printf("VISUALIZACION COMPLETA POR USUARIOS\n");
-//     printf("=====================================\n");
-//     int nrows = 0;
-//     Usuario *usuarios = get_usuarios(conn, &nrows);
-//     for(int i = 0; i < nrows; i++)
-//     {   
-//         imprimirUsuario2(usuarios[i]);
-//         printf("Nodos: \n");
-//         int nrow2 = 0;
-//         Nodo *nodos = get_nodos_from_usuario(conn, &nrow2, usuarios[i].id);
-//         for(int j = 0; j < nrow2; j++)
-//         {
-//             imprimirNodo(nodos[j]);
-//         }
-//         free(nodos);
-//     }
-//     printf("Pulsa Enter para salir...\n");
-//     fflush(stdout);
-//     while(getchar() != '\n');
-// }
 
 void ejecutar_opcion_ppal( PGconn *conn,int opcion )
 {

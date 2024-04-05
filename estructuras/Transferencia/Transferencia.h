@@ -18,5 +18,6 @@ typedef struct {
 
 
 void imprimirTransferencia(Transferencia transferencia);
+void imprimirTransferencia2(Transferencia transferencia);
 
 #endif

@@ -76,4 +76,10 @@ Transferencia* get_transferencias(PGconn *conn, int *num_rows);
 // Funcion para obtener los nodos en los que un usuario está registrado
 Nodo *get_nodos_from_usuario(PGconn *conn, int *num_rows, int id_usuario);
 
+// Funcion para obtener los archivos de un usuario
+Archivo *get_archivos_from_usuario(PGconn *conn, int *num_rows, int id_usuario);
+
+// Funcion para obtener las transferencias de un usuario
+Transferencia *get_transferencias_from_usuario(PGconn *conn, int *num_rows, int id_usuario);
+
 #endif
