@@ -126,7 +126,8 @@ void intro_credenciales(PGconn*conn, char *email, char *pass)
 {
     char email_input[60];
     char pass_input[20];
-
+    printf("\nINICIO DE SESION\n");
+    insertar_separador();   
     printf("Introduce tu email: ");
     fflush(stdout);
     fgets(email_input, sizeof(email_input), stdin);
@@ -171,6 +172,7 @@ void intro_datos_registro(PGconn *conn) {
     char passw[50];
     char passw_repeat[50];
 
+    printf("\nREGISTRO DE USUARIO\n");
     insertar_separador();
     // Peticion de datos y guardado en sus variables
     printf("Introduce tu nombre: ");
@@ -188,7 +190,7 @@ void intro_datos_registro(PGconn *conn) {
     clearIfNeeded(passw, sizeof(passw));
     passw[strcspn(passw, "\n")] = '\0';
 
-    printf("Repetir contraseña: ");
+    printf("Repetir contrasenya: ");
     fgets(passw_repeat, sizeof(passw_repeat), stdin);
     clearIfNeeded(passw_repeat, sizeof(passw_repeat));
     passw_repeat[strcspn(passw_repeat, "\n")] = '\0';
