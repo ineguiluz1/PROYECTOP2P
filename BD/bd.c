@@ -38,65 +38,15 @@ bool conexionBD(PGconn **conn) {
     }
 };
 
-//Lectura de la consulta SQL del archivo init.sql. Contiene la consulta para vaciar todas las tablas.
-char *lecturaInitSQL(){
+// Funcion para leer scrips SQL
+char *lecturaScriptSQL(char* nombreArchivo){
     FILE *sqlFile;
     char *sqlQueries = NULL;
     size_t bufferSize = 0;
     size_t totalSize = 0;
 
     // Abrir el archivo SQL
-    sqlFile = fopen("../BD/init.sql", "r");
-    if (sqlFile == NULL) {
-        printf("Error opening file!\n");
-        
-        return NULL;
-    }
-
-    // Leer y concatenar declaraciones SQL hasta el final del archivo
-    char line[1024]; // Ajustar el buffer
-    while (fgets(line, sizeof(line), sqlFile) != NULL) {
-        // Si la línea es un comentario o está vacía, la saltamos
-        if (line[0] == '\n' || line[0] == '-' || line[0] == '/' || line[0] == '\r') {
-            continue;
-        }
-
-        // Eliminamos el carácter de nueva línea al final
-        line[strcspn(line, "\n")] = '\0';
-
-        // Reservamos memoria para la cadena concatenada
-        totalSize += strlen(line) + 1; // +1 para el espacio entre las consultas o '\0' al final
-        sqlQueries = realloc(sqlQueries, totalSize);
-
-        // Inicializamos la memoria
-        if (sqlQueries == NULL) {
-            printf("Memory allocation failed!\n");
-            return NULL;
-        }
-        if (totalSize == strlen(line) + 1) {
-            strcpy(sqlQueries, line); // Si esta es la primera consulta
-        } else {
-            // Concatenamos la consulta actual
-            strcat(sqlQueries, " ");
-            strcat(sqlQueries, line);
-        }
-    }
-
-    // Cerramos el archivo
-    fclose(sqlFile);
-
-    return sqlQueries;
-};
-
-//Lectura de la consulta SQL del archivo datosPrueba.sql. Contiene la consulta para insertar datos de prueba.
-char *lecturaInsertSQL(){
-    FILE *sqlFile;
-    char *sqlQueries = NULL;
-    size_t bufferSize = 0;
-    size_t totalSize = 0;
-
-    // Abrir el archivo SQL
-    sqlFile = fopen("../BD/datosPrueba.sql", "r");
+    sqlFile = fopen(nombreArchivo, "r");
 
     if (sqlFile == NULL) {
         printf("Error opening file!\n");
@@ -140,7 +90,7 @@ char *lecturaInsertSQL(){
 
 // Funcion para vaciar/limpiar la base de datos
 bool limpiarBD(PGconn *conn){
-    char *query = lecturaInitSQL(); // Leemos el archivo init.sql
+    char *query = lecturaScriptSQL("../BD/init.sql"); // Leemos el archivo init.sql
     PGresult *res = PQexec(conn, query); // Ejecutamos la query
     free(query); // Liberamos la memoria de la variable query
     if (PQresultStatus(res) != PGRES_COMMAND_OK){ // Verificamos si la query fue exitosaç
@@ -155,7 +105,8 @@ bool limpiarBD(PGconn *conn){
 
 // Funcion para insertar datos de prueba en la base de datos
 bool datosPruebaBD(PGconn *conn){
-    char *query = lecturaInsertSQL(); // Leemos el archivo datosPrueba.sql
+    char *query = lecturaScriptSQL("../BD/datosPrueba.sql"); // Leemos el archivo datosPrueba.sql
+    //printf("%s\n", query);
     PGresult *res = PQexec(conn, query); // Ejecutamos la query
     free(query); // Liberamos la memoria de la variable query
     if (PQresultStatus(res) != PGRES_COMMAND_OK){ // Verificamos si la query fue exitosa
@@ -690,57 +641,6 @@ Transferencia* get_transferencias(PGconn *conn, int *num_rows){
     PQclear(res);
     return transferencias;
 };
-
-
-// Nodo* get_nodo_from_id_Nodo(PGconn *conn, int id_nodo) {
-//     char query[1000];
-//     sprintf(query, "SELECT * FROM nodo WHERE id=%d", id_nodo);
-//     PGresult *res = PQexec(conn, query);
-//     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-//         //printf("Query failed: %s", PQerrorMessage(conn));
-//         PQclear(res);
-//         // Devolver un nodo "vacío" o con valores predeterminados si la consulta falla
-//         return NULL;
-//     }
-
-//     Nodo *nodo;
-//     nodo->id = atoi(PQgetvalue(res, 0, 0));
-//     strncpy(nodo->IP_dir, PQgetvalue(res, 0, 1), sizeof(nodo->IP_dir) - 1);
-//     nodo->disponibilidad = PQgetvalue(res, 0, 2)[0] == 't';
-//     nodo->ultima_actividad = strtotime(PQgetvalue(res, 0, 3)); // Convertir cadena a time_t
-//     PQclear(res);
-//     imprimirNodo(*nodo);
-//     return nodo;
-// }
-
-
-
-// // Funcion para obtener los nodos en los que un usuario está registrado
-// Nodo *get_nodos_from_usuario(PGconn *conn, int *num_rows, int id_usuario){
-//     char query[1000];
-//     sprintf(query, "SELECT id_nodo FROM usuarionodo WHERE id_usuario=%d", id_usuario);
-//     PGresult *res = PQexec(conn, query);
-//     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-//         printf("Query failed: %s", PQerrorMessage(conn));
-//         PQclear(res);
-//         return NULL;
-//     }
-
-//     *num_rows = PQntuples(res);
-//     printf("num_rows: %d\n", *num_rows);
-//     Nodo *nodos = malloc(*num_rows * sizeof(Nodo));
-//     if (nodos == NULL) {
-//         printf("Memory allocation failed\n");
-//         PQclear(res);
-//         return NULL;
-//     }
-
-//     for (int i = 0; i < *num_rows; i++) {
-//         printf("Aquiedf");
-//         nodos[i] = *get_nodo_from_id_Nodo(conn, atoi(PQgetvalue(res, i, 0)));
-//         printf("Aqui");
-//     }
-// };
 
 Nodo* get_nodo_from_id_Nodo(PGconn *conn, int id_nodo) {
     char query[1000];

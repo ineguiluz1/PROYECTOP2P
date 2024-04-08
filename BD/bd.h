@@ -14,9 +14,6 @@
 // Funcion para conectar a la base de datos
 bool conexionBD(PGconn **conn);
 
-//Ejecutamos la consulta SQL del archivo init.sql. Contiene la consulta para vaciar todas las tablas.
-char *lecturaInitSQL();
-
 // Funcion para vaciar/limpiar la base de datos
 bool limpiarBD(PGconn *conn);
 
