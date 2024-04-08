@@ -146,7 +146,10 @@ void intro_credenciales(PGconn*conn, char *email, char *pass)
 
     // Verificar si el input excede los 20 caracteres
     if (strlen(pass_input) > 20) {
-        printf("Error: La contraseña excede los 20 caracteres.\n");
+        printf("Error: La contrasenya excede los 20 caracteres.\n");
+        printf("Pulsa Enter para reintentar...\n");
+        fflush(stdout);
+        while(getchar() != '\n');
         return;
     }
 
@@ -197,7 +200,7 @@ void intro_datos_registro(PGconn *conn) {
 
     // Checkeo de las contraseñas.
     if (strcmp(passw, passw_repeat) != 0) {
-        printf("Las contraseñas no coinciden. Intenta de nuevo.\n");
+        printf("Las contrasenyas no coinciden. Intenta de nuevo.\n");
         return;
     }
 
@@ -210,20 +213,6 @@ void intro_datos_registro(PGconn *conn) {
         while(getchar() != '\n');
     }
 }
-
-
-// void mostrar_menu_ppal(PGconn *conn)
-// {   
-//     clear_prompt();
-//     insertar_separador();
-//     printf("\nMENU PRINCIPAL\n\n");
-//     insertar_separador();
-//     printf("1. Gestion de nodos P2P\n2. Gestion de archivos\n3. Gestion de transferencias"
-//     "\n4. Explorar usuarios\n5. Limpiar la BD\n6. Visualizacion completa\n7. Salir\n\n");
-//     printf("Introduce una opcion: \n");
-//     insertar_separador();
-//     fflush(stdout);
-// }
 
 void mostrar_menu_ppal(PGconn *conn)
 {   do{
@@ -315,7 +304,7 @@ void mostrar_menu_nodos(PGconn *conn)
                 printf("Error al eliminar nodo\n");
                 fflush(stdout);
             }else{
-                printf("Nodo con id = %i eliminado con exito\n");
+                printf("Nodo con id = %i eliminado con exito\n",id);
                 fflush(stdout);
             }
             printf("Pulsa Enter para salir...\n");
@@ -598,7 +587,7 @@ void mostrar_transferencias(PGconn *conn)
                 printf("Error al eliminar la transferencia.\n");
                 fflush(stdout);
             }else{
-                printf("Transferencia eliminada con exito\n");
+                printf("Transferencia con id = %i eliminada con exito\n",id_transferencia);
                 fflush(stdout);
             }
 
