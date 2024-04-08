@@ -185,7 +185,7 @@ void intro_datos_registro(PGconn *conn) {
     clearIfNeeded(email, sizeof(email));
     email[strcspn(email, "\n")] = '\0';
 
-    printf("Introduce tu contraseña: ");
+    printf("Introduce tu contrasenya: ");
     fgets(passw, sizeof(passw), stdin);
     clearIfNeeded(passw, sizeof(passw));
     passw[strcspn(passw, "\n")] = '\0';
