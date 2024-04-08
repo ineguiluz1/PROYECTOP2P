@@ -9,21 +9,6 @@
 #include "../estructuras/Usuario/Usuario.h"
 #include "../estructuras/Nodo/Nodo.h"
 
-
-// // Funcion para conectar a la base de datos
-// bool conexionBD(PGconn **conn) {
-//     const char *conninfo = "host=ep-weathered-butterfly-a2sa2f1m.eu-central-1.aws.neon.tech dbname=P2P-project-prog-IV user=P2P-project-prog-IV_owner password=3AlxMIGipb4z"; // Información de conexión
-//     *conn = PQconnectdb(conninfo); // Realizamos la conexión a la base de datos
-//     if (PQstatus(*conn) != CONNECTION_OK) { // Verificamos si la conexión fue exitosa
-//         fprintf(stderr, "Error de conexion: %s\n", PQerrorMessage(*conn)); // Si no fue exitosa, imprimimos el error
-//         PQfinish(*conn); // Finalizamos la conexión
-//         return false; // Retornamos false
-//     } else {
-//         printf("Conexion exitosa\n"); // Si fue exitosa, imprimimos un mensaje
-//         return true; // Retornamos true
-//     }
-// };
-
 // Funcion para conectar a la base de datos
 bool conexionBD(PGconn **conn) {
     FILE *file = fopen("../credenciales.txt", "r");
@@ -53,7 +38,7 @@ bool conexionBD(PGconn **conn) {
     }
 };
 
-//Ejecutamos la consulta SQL del archivo init.sql. Contiene la consulta para vaciar todas las tablas.
+//Lectura de la consulta SQL del archivo init.sql. Contiene la consulta para vaciar todas las tablas.
 char *lecturaInitSQL(){
     FILE *sqlFile;
     char *sqlQueries = NULL;
@@ -61,7 +46,57 @@ char *lecturaInitSQL(){
     size_t totalSize = 0;
 
     // Abrir el archivo SQL
-    sqlFile = fopen("init.sql", "r");
+    sqlFile = fopen("../BD/init.sql", "r");
+    if (sqlFile == NULL) {
+        printf("Error opening file!\n");
+        
+        return NULL;
+    }
+
+    // Leer y concatenar declaraciones SQL hasta el final del archivo
+    char line[1024]; // Ajustar el buffer
+    while (fgets(line, sizeof(line), sqlFile) != NULL) {
+        // Si la línea es un comentario o está vacía, la saltamos
+        if (line[0] == '\n' || line[0] == '-' || line[0] == '/' || line[0] == '\r') {
+            continue;
+        }
+
+        // Eliminamos el carácter de nueva línea al final
+        line[strcspn(line, "\n")] = '\0';
+
+        // Reservamos memoria para la cadena concatenada
+        totalSize += strlen(line) + 1; // +1 para el espacio entre las consultas o '\0' al final
+        sqlQueries = realloc(sqlQueries, totalSize);
+
+        // Inicializamos la memoria
+        if (sqlQueries == NULL) {
+            printf("Memory allocation failed!\n");
+            return NULL;
+        }
+        if (totalSize == strlen(line) + 1) {
+            strcpy(sqlQueries, line); // Si esta es la primera consulta
+        } else {
+            // Concatenamos la consulta actual
+            strcat(sqlQueries, " ");
+            strcat(sqlQueries, line);
+        }
+    }
+
+    // Cerramos el archivo
+    fclose(sqlFile);
+
+    return sqlQueries;
+};
+
+//Lectura de la consulta SQL del archivo datosPrueba.sql. Contiene la consulta para insertar datos de prueba.
+char *lecturaInsertSQL(){
+    FILE *sqlFile;
+    char *sqlQueries = NULL;
+    size_t bufferSize = 0;
+    size_t totalSize = 0;
+
+    // Abrir el archivo SQL
+    sqlFile = fopen("../BD/datosPrueba.sql", "r");
 
     if (sqlFile == NULL) {
         printf("Error opening file!\n");
@@ -105,22 +140,33 @@ char *lecturaInitSQL(){
 
 // Funcion para vaciar/limpiar la base de datos
 bool limpiarBD(PGconn *conn){
-    printf("Entrando a limpiarBD\n");
     char *query = lecturaInitSQL(); // Leemos el archivo init.sql
-    //printf("Query: %s\n", query); // Imprimimos la query
     PGresult *res = PQexec(conn, query); // Ejecutamos la query
-    printf("Query ejecutada\n");
     free(query); // Liberamos la memoria de la variable query
     if (PQresultStatus(res) != PGRES_COMMAND_OK){ // Verificamos si la query fue exitosaç
-        printf("Error executing query: %s\n", PQresultErrorMessage(res)); // Si no fue exitosa, imprimimos el error
+        //printf("Error executing query: %s\n", PQresultErrorMessage(res)); // Si no fue exitosa, imprimimos el error
         PQclear(res); // Limpiamos la variable res
         PQfinish(conn); // Finalizamos la conexión
         return false; // Retornamos false
     }
-    printf("Base de datos limpiada\n"); // Si fue exitosa, imprimimos un mensaje
     PQclear(res); // Limpiamos la variable res
     return true; // Retornamos true
 };
+
+// Funcion para insertar datos de prueba en la base de datos
+bool datosPruebaBD(PGconn *conn){
+    char *query = lecturaInsertSQL(); // Leemos el archivo datosPrueba.sql
+    PGresult *res = PQexec(conn, query); // Ejecutamos la query
+    free(query); // Liberamos la memoria de la variable query
+    if (PQresultStatus(res) != PGRES_COMMAND_OK){ // Verificamos si la query fue exitosa
+        //printf("Error executing query: %s\n", PQresultErrorMessage(res)); // Si no fue exitosa, imprimimos el error
+        PQclear(res); // Limpiamos la variable res
+        PQfinish(conn); // Finalizamos la conexión
+        return false; // Retornamos false
+    }
+    PQclear(res); // Limpiamos la variable res
+    return true; // Retornamos true
+}
 
 // Funcion para insertar un archivo en la base de datos
 bool insertar_Archivo(PGconn *conn, char *nombre, long tamanyo, char *tipo, time_t fecha_subida, int id_usuario){

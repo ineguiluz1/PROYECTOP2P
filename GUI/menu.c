@@ -232,7 +232,7 @@ void mostrar_menu_ppal(PGconn *conn)
     printf("\nMENU PRINCIPAL\n\n");
     insertar_separador();
     printf("1. Gestion de nodos P2P\n2. Gestion de archivos\n3. Gestion de transferencias"
-    "\n4. Explorar usuarios\n5. Limpiar la BD\n6. Visualizacion completa\n7. Salir\n\n");
+    "\n4. Explorar usuarios\n5. Limpiar la BD\n6. Visualizacion completa\n7. Insertar datos de prueba\n8. Salir\n\n");
     printf("Introduce una opcion: \n");
     insertar_separador();
     fflush(stdout);
@@ -797,10 +797,26 @@ void confirmar_limpiarBD(PGconn *conn){
     clearIfNeeded(input, sizeof(input));
     if(opcion == 's'){
         printf("Eliminando datos de la base de datos...\n");
-        limpiarBD(conn);
-        printf("Base de datos elminada\n");
+        if (limpiarBD(conn)){
+            printf("Base de datos elminada\n");
+        }else{
+            printf("Error al eliminar la base de datos\n");
+        }
+        
     }else{
         printf("Operacion cancelada\n");
+    }
+    printf("Pulsa Enter para salir...\n");
+    fflush(stdout);
+    while(getchar() != '\n');
+}
+
+void insertar_datos_prueba(PGconn *conn)
+{   
+    if(datosPruebaBD(conn)){
+        printf("Datos de prueba insertados con exito\n");
+    }else{
+        printf("Error al insertar los datos de prueba\n");
     }
     printf("Pulsa Enter para salir...\n");
     fflush(stdout);
@@ -836,8 +852,12 @@ void ejecutar_opcion_ppal( PGconn *conn,int opcion )
         case 6:
             visualizacion_completa(conn);
             break;
-        // Salir
+        // Insertar datos de prueba
         case 7:
+            insertar_datos_prueba(conn);
+            break;
+        // Salir
+        case 8:
             clear_prompt();
             exit(0);
             break;

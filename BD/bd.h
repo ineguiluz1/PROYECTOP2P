@@ -20,6 +20,9 @@ char *lecturaInitSQL();
 // Funcion para vaciar/limpiar la base de datos
 bool limpiarBD(PGconn *conn);
 
+// Funcion para insertar datos de prueba en la base de datos
+bool datosPruebaBD(PGconn *conn);
+
 // Funcion para insertar un archivo en la base de datos
 bool insertar_Archivo(PGconn *conn, char *nombre, long tamanyo, char *tipo, time_t fecha_subida, int id_usuario);
 
