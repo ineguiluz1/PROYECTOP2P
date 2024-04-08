@@ -20,7 +20,7 @@ void imprimirTransferencia(Transferencia transferencia){
 
 void imprimirTransferencia2(Transferencia transferencia){
     //printf("\tTransferencia:\n");
-    printf("\tID: %d\n", transferencia.id);
+    printf("\tID transferencia: %d\n", transferencia.id);
     printf("\t---------- Archivo ----------\n");
     printf("\tID Archivo: %d\t Nombre archivo: %s\n", transferencia.id_archivo, transferencia.nombre_archivo);
     printf("\t---------- Enviado desde ----------\n");
@@ -29,5 +29,5 @@ void imprimirTransferencia2(Transferencia transferencia){
     printf("\t---------- Enviado a ----------\n");
     printf("\tID Usuario Receptor: %d\t Nombre usuario Receptor: %s\n", transferencia.id_usuario_rec, transferencia.nombre_usuario_rec);
     printf("\tId Nodo Receptor: %d\t IP Nodo Receptor: %s\n", transferencia.id_nodo_rec, transferencia.ip_nodo_rec);
-    printf("\t--------------------------------------------------------\n");
+    printf("\t--------------------------------------------------------\n\n");
 }

@@ -1,0 +1,4 @@
+host=ep-weathered-butterfly-a2sa2f1m.eu-central-1.aws.neon.tech
+dbname=P2P-project-prog-IV 
+user=P2P-project-prog-IV_owner 
+password=3AlxMIGipb4z

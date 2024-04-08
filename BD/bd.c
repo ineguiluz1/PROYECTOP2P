@@ -10,10 +10,39 @@
 #include "../estructuras/Nodo/Nodo.h"
 
 
+// // Funcion para conectar a la base de datos
+// bool conexionBD(PGconn **conn) {
+//     const char *conninfo = "host=ep-weathered-butterfly-a2sa2f1m.eu-central-1.aws.neon.tech dbname=P2P-project-prog-IV user=P2P-project-prog-IV_owner password=3AlxMIGipb4z"; // Información de conexión
+//     *conn = PQconnectdb(conninfo); // Realizamos la conexión a la base de datos
+//     if (PQstatus(*conn) != CONNECTION_OK) { // Verificamos si la conexión fue exitosa
+//         fprintf(stderr, "Error de conexion: %s\n", PQerrorMessage(*conn)); // Si no fue exitosa, imprimimos el error
+//         PQfinish(*conn); // Finalizamos la conexión
+//         return false; // Retornamos false
+//     } else {
+//         printf("Conexion exitosa\n"); // Si fue exitosa, imprimimos un mensaje
+//         return true; // Retornamos true
+//     }
+// };
+
 // Funcion para conectar a la base de datos
 bool conexionBD(PGconn **conn) {
-    const char *conninfo = "host=ep-weathered-butterfly-a2sa2f1m.eu-central-1.aws.neon.tech dbname=P2P-project-prog-IV user=P2P-project-prog-IV_owner password=3AlxMIGipb4z"; // Información de conexión
-    *conn = PQconnectdb(conninfo); // Realizamos la conexión a la base de datos
+    FILE *file = fopen("../credenciales.txt", "r");
+    if (file == NULL) {
+        fprintf(stderr, "No se pudo abrir el archivo credenciales.txt para la lectura de credencialas.\n");
+        exit(1);
+    }
+
+    // Leer las credenciales desde el archivo
+    char host[256], dbname[256], user[256], password[256];
+    fscanf(file, "host=%s dbname=%s user=%s password=%s", host, dbname, user, password);
+    fclose(file);
+
+    // Crear la cadena de conexión
+    char conninfo[512];
+    snprintf(conninfo, sizeof(conninfo), "host=%s dbname=%s user=%s password=%s", host, dbname, user, password);
+
+    // Conectar a la base de datos
+    *conn = PQconnectdb(conninfo);
     if (PQstatus(*conn) != CONNECTION_OK) { // Verificamos si la conexión fue exitosa
         fprintf(stderr, "Error de conexion: %s\n", PQerrorMessage(*conn)); // Si no fue exitosa, imprimimos el error
         PQfinish(*conn); // Finalizamos la conexión
@@ -23,7 +52,6 @@ bool conexionBD(PGconn **conn) {
         return true; // Retornamos true
     }
 };
-
 
 //Ejecutamos la consulta SQL del archivo init.sql. Contiene la consulta para vaciar todas las tablas.
 char *lecturaInitSQL(){

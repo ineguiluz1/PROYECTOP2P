@@ -784,6 +784,28 @@ void visualizacion_completa(PGconn *conn)
     while(getchar() != '\n');
 }
 
+void confirmar_limpiarBD(PGconn *conn){
+    char input[2];
+    char opcion;
+    clear_prompt();
+    printf("LIMPIAR BASE DE DATOS\n");
+    printf("=====================================\n");
+    printf("Estas seguro de que deseas limpiar la base de datos, esta operacion eliminaras todos los datos de la Base de Datos sin poder recuperarlos, ¿deseas continuar?\n[s/n]\n");
+    fflush(stdout);
+    fgets(input, sizeof(input), stdin);
+    sscanf(input,"%c", &opcion);
+    clearIfNeeded(input, sizeof(input));
+    if(opcion == 's'){
+        printf("Eliminando datos de la base de datos...\n");
+        limpiarBD(conn);
+        printf("Base de datos elminada\n");
+    }else{
+        printf("Operacion cancelada\n");
+    }
+    printf("Pulsa Enter para salir...\n");
+    fflush(stdout);
+    while(getchar() != '\n');
+}
 
 void ejecutar_opcion_ppal( PGconn *conn,int opcion )
 {
@@ -807,6 +829,7 @@ void ejecutar_opcion_ppal( PGconn *conn,int opcion )
             break;
         // Limpieza de la base de datos
         case 5:
+            confirmar_limpiarBD(conn);
             limpiarBD(conn);
             break;
         // Visualizar toda la informacion de la base de datos, por usuarios
