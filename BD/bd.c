@@ -9,6 +9,7 @@
 #include "../estructuras/Usuario/Usuario.h"
 #include "../estructuras/Nodo/Nodo.h"
 
+
 // Funcion para conectar a la base de datos
 bool conexionBD(PGconn **conn) {
     FILE *file = fopen("../credenciales.txt", "r");
@@ -36,6 +37,19 @@ bool conexionBD(PGconn **conn) {
         printf("Conexion exitosa\n"); // Si fue exitosa, imprimimos un mensaje
         return true; // Retornamos true
     }
+};
+
+bool initBD(PGconn *conn) {
+    char *query = lecturaScriptSQL("init.sql");
+    PGresult *res = PQexec(conn, query); 
+    free(query); 
+    if (PQresultStatus(res) != PGRES_COMMAND_OK){
+        PQclear(res); 
+        PQfinish(conn);
+        return false; 
+    }
+    PQclear(res); 
+    return true; 
 };
 
 // Funcion para leer scrips SQL
