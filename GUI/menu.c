@@ -9,7 +9,7 @@
 #include "../estructuras/Usuario/Usuario.h"
 #include "../estructuras/Nodo/Nodo.h"
 #include "../estructuras/Transferencia/Transferencia.h"
-#include "../../../../../../../../MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/locale_classes.h"
+
 
 char nombre[20];
 char passw[20];
@@ -249,11 +249,11 @@ void manageMenuNodes(int opcion, PGconn *conn)
             fgets(input_id, sizeof(input_id), stdin);
             sscanf(input_id, "%i", &id_usuario);
             clearIfNeeded(input_id, sizeof(input_id));
-            if(!eliminar_Nodo(conn, id)){
+            if(!eliminar_Nodo(conn, id_usuario)){
                 printf("Error al eliminar nodo\n");
                 fflush(stdout);
             }else{
-                printf("Nodo con id = %i eliminado con exito\n",id);
+                printf("Nodo con id = %i eliminado con exito\n",id_usuario);
                 fflush(stdout);
             }
             printf("Pulsa Enter para salir...\n");
