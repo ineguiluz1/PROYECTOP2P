@@ -85,4 +85,7 @@ Transferencia *get_transferencias_from_usuario(PGconn *conn, int *num_rows, int 
 // Funcion para inicializar la base de datos
 bool initBD(PGconn *conn);
 
+char *lecturaScriptSQL(char* nombreArchivo);
+
+
 #endif

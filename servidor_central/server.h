@@ -2,7 +2,13 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-void handleConnection(SOCKET client_socket, char buffer[1024]);
+// Function declarations
+int initServer();
+int socketCreation(SOCKET& serverSocket);
+int bindSocket(SOCKET& serverSocket);
+int connectionsManagement(SOCKET& serverSocket,SOCKADDR_IN& client_addr);
+int sendAndReceive(SOCKET& clientSocket);
+void handleClient(SOCKET& clientSocket);
 
 #endif
 
