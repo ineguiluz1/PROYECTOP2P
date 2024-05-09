@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <cstring> 
 
 vector<string> nombreArchivosDeUnaCarpeta(string ruta){
     std::string folderPath = "C:/Users/aitor/OneDrive/Escritorio/DATA VISUALIZATION/Deliverable 2/Charts";
@@ -22,7 +23,7 @@ vector<string> nombreArchivosDeUnaCarpeta(string ruta){
         std::cerr << "Couldn't open the directory." << std::endl;
         return {};
     }
-}
+};
 
 vector<int> tamanyoArchivosDeUnVector(vector<string> archivos, string folderPath){
     std::vector<int> tamanyos;
@@ -35,7 +36,7 @@ vector<int> tamanyoArchivosDeUnVector(vector<string> archivos, string folderPath
             tamanyos.push_back(file_size);
     }
     return tamanyos;
-}
+};
 
 vector<string> obtenerExtensionDeArchivos(vector<string> archivos){
     std::vector<std::string> extensiones;
@@ -44,4 +45,4 @@ vector<string> obtenerExtensionDeArchivos(vector<string> archivos){
         extensiones.push_back(extension);
     }
     return extensiones;
-}
+};
