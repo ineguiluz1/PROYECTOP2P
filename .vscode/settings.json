@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        "*.rmd": "markdown",
         "stdio.h": "c",
         "time.h": "c",
         "archivo.h": "c",
@@ -8,6 +9,7 @@
         "libpq-fe.h": "c",
         "windows.h": "c",
         "transferencia.h": "c",
-        "nodo.h": "c"
+        "nodo.h": "c",
+        "nodo.c": "cpp"
     }
 }

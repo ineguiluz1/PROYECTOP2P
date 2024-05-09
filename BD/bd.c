@@ -25,7 +25,7 @@ bool conexionBD(PGconn **conn) {
     // Crear la cadena de conexión
     char conninfo[512];
     snprintf(conninfo, sizeof(conninfo), "host=%s dbname=%s user=%s password=%s", host, dbname, user, password);
-
+    printf("Conectando a BD, funcion: conexionBD\n");
     // Conectar a la base de datos
     *conn = PQconnectdb(conninfo);
     if (PQstatus(*conn) != CONNECTION_OK) { // Verificamos si la conexión fue exitosa
@@ -126,6 +126,28 @@ bool insertar_Archivo(PGconn *conn, char *nombre, long tamanyo, char *tipo, time
     strftime(formatted_timestamp, 80, "%Y-%m-%d %H:%M:%S", upload_tm);
     char query[10000];
     sprintf(query, "INSERT INTO archivo(nombre, tamano, tipo, fecha_subida, id_usuario) VALUES('%s', %ld, '%s', '%s', %d)", nombre, tamanyo, tipo, formatted_timestamp, id_usuario);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK){
+        printf("Error executing query: %s\n", PQresultErrorMessage(res));
+        PQclear(res);
+        PQfinish(conn);
+        return false;
+    }
+    PQclear(res);
+    return true;
+};
+
+void eliminarFilasWhereNombreyUsuario(PGconn *conn,char *nombre,int id_usuario){
+    char query2[10000];
+    sprintf(query2,"DELETE FROM archivo WHERE nombre = '%s' and id_usuario = '%d'",nombre,id_usuario);
+    PGresult *res = PQexec(conn, query2);
+    PQclear(res);
+};
+
+bool insertar_Archivo2(PGconn *conn, char *nombre, long tamanyo, char *tipo, int id_usuario){
+    eliminarFilasWhereNombreyUsuario(conn,nombre,id_usuario);
+    char query[10000];
+    sprintf(query, "INSERT INTO archivo(nombre, tamano, tipo, fecha_subida, id_usuario) VALUES('%s', %ld, '%s', CURRENT_TIMESTAMP, %d)", nombre, tamanyo, tipo, id_usuario);
     PGresult *res = PQexec(conn, query);
     if (PQresultStatus(res) != PGRES_COMMAND_OK){
         printf("Error executing query: %s\n", PQresultErrorMessage(res));
