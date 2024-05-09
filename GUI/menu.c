@@ -10,6 +10,7 @@
 #include "../estructuras/Nodo/Nodo.h"
 #include "../estructuras/Transferencia/Transferencia.h"
 
+
 char nombre[20];
 char passw[20];
 
@@ -20,48 +21,6 @@ void clearIfNeeded(char *str, int max_line)
 		while (getchar() != '\n');
 }
 
-// void initGUI(PGconn *conn)
-// {
-//         /* code */
-//     char input[10];
-//     int opcion_inicio;
-//     int opcion_ppal;
-//     bool sesion_iniciada = 0;
-
-//     do{
-//         if(!sesion_iniciada)
-//         {
-//             // Mostrar el primer menu
-//             mostrar_menu_login(conn);
-//             insertar_separador();
-
-//             // Guardar la opcion
-//             fgets(input, sizeof(input), stdin);
-//             sscanf(input, "%d", &opcion_inicio);
-
-//             // Ejecuta la opcion
-//             ejecutar_opcion_inicio(conn,opcion_inicio);
-
-//             if(opcion_inicio == 1 || opcion_inicio == 2)
-//             {
-//                 sesion_iniciada = 1;
-//             }
-
-//         }else{
-            
-//             // Mostrar el menu principal de la app
-//             mostrar_menu_ppal(conn);
-
-//             // Guardar la opcion en su variable correspondiente
-//             fgets(input, sizeof(input), stdin);
-//             sscanf(input, "%d", &opcion_ppal);
-//             clearIfNeeded(input, sizeof(input));
-//             // Ejecutar la opcion
-//             ejecutar_opcion_ppal(conn,opcion_ppal);
-//         }
-
-//     }while(opcion_inicio != 3);
-// }
 
 void initGUI(PGconn *conn){
     //         /* code */
@@ -256,54 +215,44 @@ void mostrar_menu_nodos(PGconn *conn)
     fgets(input, sizeof(input), stdin);
     sscanf(input,"%d", &opcion);
     clearIfNeeded(input, sizeof(input));
+    manageMenuNodes(opcion, conn);
+}
 
-    switch(opcion)
+void manageMenuNodes(int opcion, PGconn *conn)
+{
+    switch (opcion)
     {
-        case 1:
-        {   
-            char input[255];
-            char dir_ip[255];
-            char input_id[10];
-            int id_usuario;
-            printf("Introduce la direccion IP del nodo: \n\n");
-            fflush(stdout);
-            fgets(input, sizeof(input), stdin);
-            clearIfNeeded(input, sizeof(input));
-            input[strcspn(input, "\n")] = '\0';
-            strcpy(dir_ip, input);
+    case 1:
+    {
+        char input[255];
+        char dir_ip[255];
+        char input_id[10];
+        int id_usuario;
+        printf("Introduce la direccion IP del nodo: \n\n");
+        fflush(stdout);
+        fgets(input, sizeof(input), stdin);
+        clearIfNeeded(input, sizeof(input));
+        input[strcspn(input, "\n")] = '\0';
+        strcpy(dir_ip, input);
 
-            printf("Introce el id del usuario: \n\n");
+        printf("Introce el id del usuario: \n\n");
+        fflush(stdout);
+        fgets(input_id, sizeof(input_id), stdin);
+        sscanf(input_id, "%i", &id_usuario);
+        clearIfNeeded(input_id, sizeof(input_id));
+
+        if (!insertar_Nodo2(conn, dir_ip, id_usuario))
+        {
+            printf("Error al insertar el nodo.\n");
             fflush(stdout);
             fgets(input_id, sizeof(input_id), stdin);
             sscanf(input_id, "%i", &id_usuario);
             clearIfNeeded(input_id, sizeof(input_id));
-
-            if(!insertar_Nodo2(conn, dir_ip, id_usuario)){
-                printf("Error al insertar el nodo.\n");
-                fflush(stdout);
-            }else{
-                printf("Nodo anyadido con exito\n");
-                fflush(stdout);
-            }
-            printf("Pulsa Enter para salir...\n");
-            fflush(stdout);
-            while(getchar() != '\n');
-            break;
-        }
-        case 2:
-        {
-            int id;
-            char input_id[10];
-            printf("Introduce el id del nodo que deseas eliminar: \n\n");
-            fflush(stdout);
-            fgets(input_id, sizeof(input_id), stdin);
-            sscanf(input_id, "%i", &id);
-            clearIfNeeded(input_id, sizeof(input_id));
-            if(!eliminar_Nodo(conn, id)){
+            if(!eliminar_Nodo(conn, id_usuario)){
                 printf("Error al eliminar nodo\n");
                 fflush(stdout);
             }else{
-                printf("Nodo con id = %i eliminado con exito\n",id);
+                printf("Nodo con id = %i eliminado con exito\n",id_usuario);
                 fflush(stdout);
             }
             printf("Pulsa Enter para salir...\n");
@@ -311,58 +260,98 @@ void mostrar_menu_nodos(PGconn *conn)
             while(getchar() != '\n');
             break;
         }
-        case 3:
-        {   
-            int nrows = 0;
-            Nodo *nodos = get_nodos(conn,&nrows);
-            for(int i = 0; i<nrows; i++)
-            {
-                imprimirNodo(nodos[i]);
-            }
-            free(nodos);
-            printf("\nPulsa Enter para salir...\n");
+        else
+        {
+            printf("Nodo anyadido con exito\n");
             fflush(stdout);
-            while(getchar() != '\n');
-            break;
         }
-        case 4:
-        {   
-            char input_nodo[10];
-            int id_nodo;
-            char input_id[10];
-            int id_usuario;
-
-            printf("Introduce ID del nodo: \n\n");
-            fflush(stdout);
-            fgets(input_nodo, sizeof(input_nodo), stdin);
-            sscanf(input_nodo, "%i", &id_nodo);
-            clearIfNeeded(input_nodo, sizeof(input_nodo));
-
-            printf("Introce el ID del usuario: \n\n");
-            fflush(stdout);
-            fgets(input_id, sizeof(input_id), stdin);
-            sscanf(input_id, "%i", &id_usuario);
-            clearIfNeeded(input_id, sizeof(input_id));
-
-            if(!anyadir_usuario_nodo(conn, id_usuario, id_nodo)){
-                printf("Error al anyadir el usuario al nodo.\n");
-                fflush(stdout);
-            }else{
-                printf("Usuario anyadido al nodo con exito. \n");
-                fflush(stdout);
-            }
-
-            printf("\nPulsa Enter para salir...\n");
-            fflush(stdout);
-            while(getchar() != '\n');
-            break;
-        }
-        case 5:
-            break;
-        default:
-            break;
+        printf("Pulsa Enter para salir...\n");
+        fflush(stdout);
+        while (getchar() != '\n')
+            ;
+        break;
     }
+    case 2:
+    {
+        int id;
+        char input_id[10];
+        printf("Introduce el id del nodo que deseas eliminar: \n\n");
+        fflush(stdout);
+        fgets(input_id, sizeof(input_id), stdin);
+        sscanf(input_id, "%i", &id);
+        clearIfNeeded(input_id, sizeof(input_id));
+        if (!eliminar_Nodo(conn, id))
+        {
+            printf("Error al eliminar nodo\n");
+            fflush(stdout);
+        }
+        else
+        {
+            printf("Nodo con id = %i eliminado con exito\n");
+            fflush(stdout);
+        }
+        printf("Pulsa Enter para salir...\n");
+        fflush(stdout);
+        while (getchar() != '\n')
+            ;
+        break;
+    }
+    case 3:
+    {
+        int nrows = 0;
+        Nodo *nodos = get_nodos(conn, &nrows);
+        for (int i = 0; i < nrows; i++)
+        {
+            imprimirNodo(nodos[i]);
+        }
+        free(nodos);
+        printf("\nPulsa Enter para salir...\n");
+        fflush(stdout);
+        while (getchar() != '\n')
+            ;
+        break;
+    }
+    case 4:
+    {
+        char input_nodo[10];
+        int id_nodo;
+        char input_id[10];
+        int id_usuario;
 
+        printf("Introduce ID del nodo: \n\n");
+        fflush(stdout);
+        fgets(input_nodo, sizeof(input_nodo), stdin);
+        sscanf(input_nodo, "%i", &id_nodo);
+        clearIfNeeded(input_nodo, sizeof(input_nodo));
+
+        printf("Introce el ID del usuario: \n\n");
+        fflush(stdout);
+        fgets(input_id, sizeof(input_id), stdin);
+        sscanf(input_id, "%i", &id_usuario);
+        clearIfNeeded(input_id, sizeof(input_id));
+
+        if (!anyadir_usuario_nodo(conn, id_usuario, id_nodo))
+        {
+            printf("Error al anyadir el usuario al nodo.\n");
+            fflush(stdout);
+        }
+        else
+        {
+            printf("Usuario anyadido al nodo con exito. \n");
+            fflush(stdout);
+        }
+
+        printf("\nPulsa Enter para salir...\n");
+        fflush(stdout);
+        while (getchar() != '\n')
+            ;
+        break;
+    }
+    case 5:
+        break;
+    default:
+        break;
+    }
 }
 
 void mostrar_menu_archivos(PGconn *conn)

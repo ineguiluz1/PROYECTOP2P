@@ -39,6 +39,8 @@ void mostrar_menu_nodos();
 // Funcion para mostrar el menu de gestion de archivos
 void mostrar_menu_archivos(PGconn *conn);
 
+void manageMenuNodes(int opcion, PGconn *conn);
+
 // Funcion para mostrar las transferencias
 void mostrar_transferencias();
 

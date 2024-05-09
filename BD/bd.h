@@ -84,5 +84,13 @@ Archivo *get_archivos_from_usuario(PGconn *conn, int *num_rows, int id_usuario);
 // Funcion para obtener las transferencias de un usuario
 Transferencia *get_transferencias_from_usuario(PGconn *conn, int *num_rows, int id_usuario);
 
+<<<<<<< HEAD
+=======
+// Funcion para inicializar la base de datos
+bool initBD(PGconn *conn);
+
+char *lecturaScriptSQL(char* nombreArchivo);
+
+>>>>>>> 0de352d6e15d37f52e409ad325bcd2d319b3dbe5
 
 #endif
