@@ -2,6 +2,15 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include "client.h"
+#include <libpq-fe.h>
+#include <stdbool.h>
+
+extern "C" { // Tell the compiler this is a C function
+
+#include "../BD/bd.h"
+#include "../GUI/client_menu/client_menu.h"
+
+}
 //!compilar: g++ client.cpp -o client -lws2_32
 
 
@@ -13,6 +22,13 @@ int main() {
     if (initClient() != 0) {
         std::cerr << "Failed to initialize Winsock." << std::endl;
         return 1;
+    }
+
+    PGconn *conn;
+    bool estadoConexionBD = conexionBD(&conn);
+    if(!estadoConexionBD){
+        std::cerr << "Error al conectar con la base de datos" << std::endl;
+        exit(1);
     }
 
     // Create a socket
@@ -27,6 +43,8 @@ int main() {
         std::cerr << "Failed to connect to the server." << std::endl;
         return 1;
     }
+
+    initClientGUI(conn, clientSocket, buffer);
 
     // Client setup complete
     std::cout << "Client setup complete. Sending data..." << std::endl;

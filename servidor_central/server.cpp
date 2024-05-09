@@ -5,17 +5,17 @@
 #include "server.h"
 #include <time.h>
 #include <libpq-fe.h>
-#include "../estructuras/Archivo/Archivo.h"
-
+#include <stdbool.h>
 extern "C" { // Tell the compiler this is a C function
 
 #include "../BD/bd.h"
+#include "../estructuras/Archivo/Archivo.h"
 
 }
 
-
-
-//!compilar: g++ server.cpp -o server -lws2_32
+//! Para compilar : gcc -c ../estructuras/Nodo/Nodo.c ../estructuras/Transferencia/Transferencia.c ../BD/bd.c ../estructuras/Archivo/Archivo.c ../estructuras/Usuario/Usuario.c -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq
+//! g++ -c servidor_central/server.cpp -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
+//! g++ -o servidor_central/server.exe *o -lstdc++ -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
 
 using namespace std;
 
@@ -28,9 +28,10 @@ int main() {
 
     //Initialize the database
     PGconn *conn;
-    if(conexionBD(&conn) != 0){
-        std::cerr << "Failed to connect to the database." << std::endl;
-        return 1;
+    bool estadoConexionBD = conexionBD(&conn);
+    if(!estadoConexionBD){
+        cout << "Error al conectar con la base de datos" << endl;
+        exit(1);
     }
 
     // Create a socket
