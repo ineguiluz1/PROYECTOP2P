@@ -3,12 +3,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <windows.h>
-#include "../BD/bd.h"
+#include <stdbool.h>
+#include "../../BD/bd.h"
 #include <libpq-fe.h>
-#include "../estructuras/Archivo/Archivo.h"
-#include "../estructuras/Usuario/Usuario.h"
-#include "../estructuras/Nodo/Nodo.h"
-#include "../estructuras/Transferencia/Transferencia.h"
+#include "../../estructuras/Archivo/Archivo.h"
+#include "../../estructuras/Usuario/Usuario.h"
+#include "../../estructuras/Nodo/Nodo.h"
+#include "../../estructuras/Transferencia/Transferencia.h"
 
 
 char nombre[20];

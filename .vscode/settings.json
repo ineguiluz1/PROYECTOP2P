@@ -54,6 +54,12 @@
         "ostream": "cpp",
         "stdexcept": "cpp",
         "streambuf": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "fstream": "cpp",
+        "sstream": "cpp",
+        "cinttypes": "cpp",
+        "menu.h": "c",
+        "string.h": "c",
+        "stdbool.h": "c"
     }
 }

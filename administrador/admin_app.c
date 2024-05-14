@@ -1,4 +1,4 @@
-#include "../GUI/menu.h"
+#include "../GUI/adminapp_menu/menu.h"
 #include "../BD/bd.h"
 #include <libpq-fe.h>
 #include "../estructuras/Archivo/Archivo.h"
