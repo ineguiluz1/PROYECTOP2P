@@ -125,7 +125,6 @@ void intro_credenciales(PGconn*conn, char *email, char *pass)
         fflush(stdout);
         while(getchar() != '\n');
     }
-
 }
 
 void intro_datos_registro(PGconn *conn) {

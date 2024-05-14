@@ -23,6 +23,8 @@ bool datosPruebaBD(PGconn *conn);
 // Funcion para insertar un archivo en la base de datos
 bool insertar_Archivo(PGconn *conn, char *nombre, long tamanyo, char *tipo, time_t fecha_subida, int id_usuario);
 
+bool insertar_Archivo2(PGconn *conn, char *nombre, long tamanyo, char *tipo, int id_usuario);
+
 // Funcion para eliminar un archivo de la base de datos
 bool eliminar_Archivo(PGconn *conn, int id_archivo);
 
