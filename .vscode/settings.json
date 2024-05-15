@@ -62,6 +62,7 @@
         "cinttypes": "cpp",
         "menu.h": "c",
         "string.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "ctime": "cpp"
     }
 }

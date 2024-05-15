@@ -120,21 +120,24 @@ int bindSocket(SOCKET& serverSocket) {
     return 0;
 }
 
-void handleClient(SOCKET& clientSocket, PGconn *conn) {
+bool handleClient(SOCKET& clientSocket, PGconn *conn) {
     char buffer[1024] = {0};
     
     // Recibir datos del cliente
     int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
     if (bytesReceived == SOCKET_ERROR) {
         std::cerr << "Error al recibir datos del cliente" << std::endl;
+        return false;
     } else if (bytesReceived == 0) {
         std::cerr << "El cliente ha cerrado la conexiÃ³n" << std::endl;
+        return false;
     } else {
         //TODO: Implementar la logica del servidor
         // Analizar el mensaje recibido y responder apropiadamente 
         if (strcmp(buffer, "hola") == 0) {
             const char *response = "Hola cliente!";
             send(clientSocket, response, strlen(response), 0);
+            return true;
         } else if(strcmp(buffer, "LOGIN") == 0) {
             bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
             buffer[bytesReceived] = '\0';
@@ -145,12 +148,19 @@ void handleClient(SOCKET& clientSocket, PGconn *conn) {
             if(autenticar_usuario(conn, correo, contrasena))
             {
                 printf("Usuario autenticado\n");
-                
+                const char *resp = "ok";
+                send(clientSocket, resp, strlen(resp), 0);
+            }else{
+                printf("Usuario no autenticado\n");
+                const char *resp = "no ok";
+                send(clientSocket, resp, strlen(resp), 0);
             };
+            return true;
         } else if(strcmp(buffer, "LOGOUT") == 0) {
             const char *response = "LOGOUT";
             cout << "Enviando respuesta: " << response << endl;
             send(clientSocket, response, strlen(response), 0);
+            return true;
         } else if(strcmp(buffer, "REGISTER") == 0) {
             bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
             buffer[bytesReceived] = '\0';
@@ -166,10 +176,12 @@ void handleClient(SOCKET& clientSocket, PGconn *conn) {
             const char *response = "REGISTER";
             cout << "Enviando respuesta: " << response << endl;
             send(clientSocket, response, strlen(response), 0);
+            return true;
         } else if(strcmp(buffer, "ENVIAR_LISTA_ARCHIVOS") == 0){
             const char *response = "LISTA_ARCHIVOS";
             cout << "Enviando respuesta: " << response << endl;
             send(clientSocket, response, strlen(response), 0);
+            return true;
         } else if(strcmp(buffer, "AÑADIR_ARCHIVO") == 0){
             bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
             buffer[bytesReceived] = '\0';
@@ -189,11 +201,12 @@ void handleClient(SOCKET& clientSocket, PGconn *conn) {
             archivo.id_usuario = std::stoi(token);
 
             insertar_Archivo2(conn, archivo.nombre, archivo.tamanyo, archivo.tipo, archivo.id_usuario);
-            
+            return true;
         } else if(strcmp(buffer, "ELIMINAR_ARCHIVO") == 0){
             const char *response = "ELIMINAR_ARCHIVO";
             cout << "Enviando respuesta: " << response << endl;
             send(clientSocket, response, strlen(response), 0);
+            return true;
         } else if(strcmp(buffer, "BUSCAR_ARCHIVO_POR_NOMBRE") == 0){
             bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
             buffer[bytesReceived] = '\0';
@@ -201,19 +214,23 @@ void handleClient(SOCKET& clientSocket, PGconn *conn) {
             char *nombre;
             strcpy(nombre, buffer);
             printf("Nombre del archivo a buscar: %s\n", nombre);
+            return true;
 
         } else if(strcmp(buffer, "DESCARGAR_ARCHIVO") == 0){
             bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
             buffer[bytesReceived] = '\0';
 
             printf("Nombre del archivo a descargar: %s\n", buffer);
+            return true;
         }
         else {
             const char *response = "Comando no reconocido";
             cout << "Enviando respuesta: " << buffer << endl;
             send(clientSocket, response, strlen(response), 0);
+            return true;
         }
     }
+    return true;
 }
 
 int connectionsManagement(SOCKET& serverSocket,SOCKADDR_IN& client_addr, PGconn *conn) {
@@ -252,7 +269,10 @@ int connectionsManagement(SOCKET& serverSocket,SOCKADDR_IN& client_addr, PGconn 
         // ... (Optional) Handle the connected client (e.g., send/receive data) ...
         // Handle the connected client (e.g., send/receive data)
         while (true) {
-            handleClient(clientSocket, conn);
+            bool status = handleClient(clientSocket, conn);
+            if (!status) {
+                break;
+            }
         }
         // Close the client socket
         closesocket(clientSocket);

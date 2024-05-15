@@ -45,7 +45,7 @@ void mostrarMenuLoginRegister(PGconn *conn, SOCKET clientSocket, char buffer[102
 }
 
 void menuLogin(PGconn *conn, SOCKET clientSocket, char buffer[1024])
-{
+{   
     char *nombreUsuario = new char[50];
     char *contrasena = new char[50];
 
@@ -56,10 +56,18 @@ void menuLogin(PGconn *conn, SOCKET clientSocket, char buffer[1024])
     char *usuarioFormateado = new char[100];
     sprintf(usuarioFormateado, "%s,%s", nombreUsuario, contrasena);
     sendMessage(clientSocket, usuarioFormateado);
-
+    int bytesReceived = recv(clientSocket, buffer, 1024, 0);
+    buffer[bytesReceived] = '\0';
     system("cls");
-    menuOpcionesPrincipales(conn, clientSocket, buffer);
-
+    cout<<buffer<<endl;
+    if (strcmp(buffer, "ok") == 0)
+    {
+        menuOpcionesPrincipales(conn, clientSocket, buffer);
+    }
+    else
+    {
+        mostrarMenuLoginRegister(conn, clientSocket, buffer);
+    }
 }
 
 void menuRegister(PGconn *conn, SOCKET clientSocket, char buffer[1024])
