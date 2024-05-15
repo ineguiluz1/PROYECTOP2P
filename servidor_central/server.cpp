@@ -125,7 +125,7 @@ bool handleClient(SOCKET& clientSocket, PGconn *conn) {
     while (true){
     // Recibir datos del cliente
         int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
-        printf("Mensaje recibido: %s\n", buffer);
+        cout << "Mensaje recibido: " << buffer << endl;
         if (bytesReceived == SOCKET_ERROR) {
             std::cerr << "Error al recibir datos del cliente" << std::endl;
             break;
@@ -148,6 +148,10 @@ bool handleClient(SOCKET& clientSocket, PGconn *conn) {
                 if(autenticar_usuario(conn, correo, contrasena))
                 {
                     printf("Usuario autenticado\n");
+                    send(clientSocket, "ok", 2, 0);
+                }else{
+                    printf("Usuario no autenticado\n");
+                    send(clientSocket, "no", 2, 0);
                 };
             } else if(strcmp(buffer, "LOGOUT") == 0) {
                 const char *response = "LOGOUT";
@@ -190,6 +194,9 @@ bool handleClient(SOCKET& clientSocket, PGconn *conn) {
                 buffer[bytesReceived] = '\0';
 
                 printf("Nombre del archivo a descargar: %s\n", buffer);
+            } else if (strcmp(buffer, "bye") == 0){
+                printf("Cerrando conexion con cliente\n");
+                break;
             }
             else {
                 const char *response = "Comando no reconocido";
@@ -233,9 +240,6 @@ int connectionsManagement(SOCKET& serverSocket,SOCKADDR_IN& client_addr, PGconn 
 
         // Print message when connection to client is established
         std::cout << "Connection to a client established." << std::endl;
-
-        // ... (Optional) Handle the connected client (e.g., send/receive data) ...
-        // Handle the connected client (e.g., send/receive data)
         
         handleClient(clientSocket, conn);
         

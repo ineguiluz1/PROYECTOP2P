@@ -59,13 +59,9 @@ void menuLogin(PGconn *conn, SOCKET clientSocket, char buffer[1024])
     int bytesReceived = recv(clientSocket, buffer, 1024, 0);
     buffer[bytesReceived] = '\0';
     system("cls");
-    cout<<buffer<<endl;
-    if (strcmp(buffer, "ok") == 0)
-    {
+    if (strcmp(buffer, "ok") == 0){
         menuOpcionesPrincipales(conn, clientSocket, buffer);
-    }
-    else
-    {
+    }else{
         mostrarMenuLoginRegister(conn, clientSocket, buffer);
     }
 }
@@ -115,10 +111,13 @@ void menuOpcionesPrincipales(PGconn *conn, SOCKET clientSocket, char buffer[1024
     case 3:
         sendMessage(clientSocket, "DESCARGAR_ARCHIVO");
         break;
-    case 4:
-        sendMessage(clientSocket, "EXIT");
-        exit(0);
-        break;
+    case 4:{
+        const char *mens = "bye";
+        //sendMessage(clientSocket,mensaje);
+        sendMessage(clientSocket,mens);
+        cout<<"Enviando: "<<mens<<endl;
+        //exit(0);
+        break;}
     default:
         cout<<"Opcion no valida"<<endl;
         break;

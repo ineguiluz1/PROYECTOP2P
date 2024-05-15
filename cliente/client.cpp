@@ -45,9 +45,6 @@ int main() {
 
     initClientGUI(conn, clientSocket, buffer);
 
-    // Client setup complete
-    std::cout << "Client setup complete. Sending data..." << std::endl;
-
     // Cleanup (close client socket, etc.) can be handled elsewhere in the code
     closesocket(clientSocket);
     WSACleanup();
