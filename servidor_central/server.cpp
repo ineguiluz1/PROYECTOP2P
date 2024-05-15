@@ -131,7 +131,7 @@ void handleClient(SOCKET& clientSocket, PGconn *conn) {
         std::cerr << "El cliente ha cerrado la conexiÃ³n" << std::endl;
     } else {
         //TODO: Implementar la logica del servidor
-        // Analizar el mensaje recibido y responder apropiadamente
+        // Analizar el mensaje recibido y responder apropiadamente 
         if (strcmp(buffer, "hola") == 0) {
             const char *response = "Hola cliente!";
             send(clientSocket, response, strlen(response), 0);
@@ -145,6 +145,7 @@ void handleClient(SOCKET& clientSocket, PGconn *conn) {
             if(autenticar_usuario(conn, correo, contrasena))
             {
                 printf("Usuario autenticado\n");
+                
             };
         } else if(strcmp(buffer, "LOGOUT") == 0) {
             const char *response = "LOGOUT";
