@@ -14,8 +14,8 @@ extern "C" { // Tell the compiler this is a C function
 }
 
 //! Para compilar : gcc -c ../estructuras/Nodo/Nodo.c ../estructuras/Transferencia/Transferencia.c ../BD/bd.c ../estructuras/Archivo/Archivo.c ../estructuras/Usuario/Usuario.c -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq
-//! g++ -c servidor_central/server.cpp -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
-//! g++ -o servidor_central/server.exe *o -lstdc++ -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
+//! g++ -c server.cpp -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
+//! g++ -o server.exe *.o -lstdc++ -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
 
 using namespace std;
 
@@ -50,7 +50,7 @@ int main() {
     SOCKADDR_IN client_addr;
 
     // Listen and accept connections
-    if (connectionsManagement(serverSocket,client_addr) != 0) {
+    if (connectionsManagement(serverSocket,client_addr, conn) != 0) {
         std::cerr << "Failed to manage connections." << std::endl;
         return 1;
     }
@@ -120,7 +120,7 @@ int bindSocket(SOCKET& serverSocket) {
     return 0;
 }
 
-void handleClient(SOCKET& clientSocket) {
+void handleClient(SOCKET& clientSocket, PGconn *conn) {
     char buffer[1024] = {0};
     
     // Recibir datos del cliente
@@ -139,15 +139,33 @@ void handleClient(SOCKET& clientSocket) {
             const char *response = "Hola cliente!";
             send(clientSocket, response, strlen(response), 0);
         } else if(strcmp(buffer, "LOGIN") == 0) {
-            const char *response = "LOGIN";
-            cout << "Enviando respuesta: " << response << endl;
-            send(clientSocket, response, strlen(response), 0);
+            bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
+            buffer[bytesReceived] = '\0';
+
+            char *correo = strtok(buffer, ",");
+            char *contrasena = strtok(nullptr, ",");
+
+            if(autenticar_usuario(conn, correo, contrasena))
+            {
+                printf("Usuario autenticado\n");
+            };
         } else if(strcmp(buffer, "LOGOUT") == 0) {
             const char *response = "LOGOUT";
             cout << "Enviando respuesta: " << response << endl;
             send(clientSocket, response, strlen(response), 0);
         } else if(strcmp(buffer, "REGISTER") == 0) {
-            const char *response = "REGISTRO";
+            bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
+            buffer[bytesReceived] = '\0';
+
+            char *nombre = strtok(buffer, ",");
+            printf("Nombre: %s\n", nombre);
+            char *contrasena = strtok(nullptr, ",");
+            printf("Contrasena: %s\n", contrasena);
+            char *correo = strtok(nullptr, ",");
+            printf("Correo: %s\n", correo);
+
+            registrar_usuario2(conn, nombre, correo, contrasena);
+            const char *response = "REGISTER";
             cout << "Enviando respuesta: " << response << endl;
             send(clientSocket, response, strlen(response), 0);
         } else if(strcmp(buffer, "ENVIAR_LISTA_ARCHIVOS") == 0){
@@ -155,7 +173,9 @@ void handleClient(SOCKET& clientSocket) {
             cout << "Enviando respuesta: " << response << endl;
             send(clientSocket, response, strlen(response), 0);
         } else if(strcmp(buffer, "AÑADIR_ARCHIVO") == 0){
+            bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
             buffer[bytesReceived] = '\0';
+
             Archivo archivo;
             char *token = strtok(buffer, ",");
             archivo.id = stoi(token);
@@ -169,12 +189,29 @@ void handleClient(SOCKET& clientSocket) {
             archivo.fecha_subida = std::stol(token);
             token = strtok(nullptr, ",");
             archivo.id_usuario = std::stoi(token);
-            imprimirArchivo(archivo);   
+
+            insertar_Archivo2(conn, archivo.nombre, archivo.tamanyo, archivo.tipo, archivo.id_usuario);
+            
         } else if(strcmp(buffer, "ELIMINAR_ARCHIVO") == 0){
             const char *response = "ELIMINAR_ARCHIVO";
             cout << "Enviando respuesta: " << response << endl;
             send(clientSocket, response, strlen(response), 0);
-        } else {
+        } else if(strcmp(buffer, "BUSCAR_ARCHIVO_POR_NOMBRE")){
+            bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
+            buffer[bytesReceived] = '\0';
+
+            char *nombre;
+            strcpy(nombre, buffer);
+
+            printf("Nombre del archivo: %s\n", nombre);
+        } else if(strcmp(buffer, "DESCARGAR_ARCHIVO") == 0){
+            bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
+            buffer[bytesReceived] = '\0';
+            char *nombre;
+            strcpy(nombre, buffer);
+            printf("Nombre del archivo a descargar: %s\n", nombre);
+        }
+        else {
             const char *response = "Comando no reconocido";
             cout << "Enviando respuesta: " << response << endl;
             send(clientSocket, response, strlen(response), 0);
@@ -182,7 +219,7 @@ void handleClient(SOCKET& clientSocket) {
     }
 }
 
-int connectionsManagement(SOCKET& serverSocket,SOCKADDR_IN& client_addr) {
+int connectionsManagement(SOCKET& serverSocket,SOCKADDR_IN& client_addr, PGconn *conn) {
     // Listen for incoming connections
     if (listen(serverSocket, 1) == SOCKET_ERROR) {
         std::cerr << "listen(): Error listening on socket: " << WSAGetLastError() << std::endl;
@@ -217,7 +254,10 @@ int connectionsManagement(SOCKET& serverSocket,SOCKADDR_IN& client_addr) {
 
         // ... (Optional) Handle the connected client (e.g., send/receive data) ...
         // Handle the connected client (e.g., send/receive data)
-        handleClient(clientSocket);
+        while (true) {
+            handleClient(clientSocket, conn);
+        }
+        handleClient(clientSocket, conn);
 
         // Close the client socket
         closesocket(clientSocket);

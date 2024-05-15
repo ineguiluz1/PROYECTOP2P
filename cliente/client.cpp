@@ -4,16 +4,15 @@
 #include "client.h"
 #include <libpq-fe.h>
 #include <stdbool.h>
-
-extern "C" { // Tell the compiler this is a C function
-
-#include "../BD/bd.h"
 #include "../GUI/client_menu/client_menu.h"
 
+extern "C" { // Tell the compiler this is a C function
+#include "../BD/bd.h"
 }
-//!compilar: g++ client.cpp -o client -lws2_32
 
-
+//! gcc -c ../estructuras/Nodo/Nodo.c ../estructuras/Transferencia/Transferencia.c ../BD/bd.c ../estructuras/Archivo/Archivo.c ../estructuras/Usuario/Usuario.c -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq
+//! g++ -c client.cpp ../GUI/client_menu/client_menu.cpp -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
+//! g++ -o client.exe *.o -lstdc++ -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
 
 int main() {
     char buffer[1024] = {0};
@@ -81,6 +80,7 @@ int initClient() {
         std::cout << "The status: " << wsaData.szSystemStatus << std::endl;
     }
     // Continue with the client setup...
+
     // (See the full code here: https://github.com/Tharun8951/cpp-tcp-server/")
 
     return 0;

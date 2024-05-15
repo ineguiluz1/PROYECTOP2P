@@ -5,6 +5,10 @@
 #include <ws2tcpip.h>
 #include "../../cliente/client.h"
 #include <windows.h>
+#include <vector>
+extern "C" { // Tell the compiler this is a C function
+#include "../../estructuras/Archivo/Archivo.h"
+}
 
 using namespace std;
 
@@ -46,7 +50,7 @@ void menuLogin(PGconn *conn, SOCKET clientSocket, char buffer[1024])
     char *contrasena = new char[50];
 
     cout<<"INICIO DE SESION"<<endl<<"===================="<<endl;
-    cout<<"Ingrese su nombre de usuario: "<<endl;cin>>nombreUsuario;
+    cout<<"Ingrese su correo electronico: "<<endl;cin>>nombreUsuario;
     cout<<"Ingrese su contrasena: "<<endl;cin>>contrasena;
 
     char *usuarioFormateado = new char[100];
@@ -74,7 +78,7 @@ void menuRegister(PGconn *conn, SOCKET clientSocket, char buffer[1024])
     sendMessage(clientSocket, usuarioFormateado);
 
     system("cls");
-    menuSeleccionCarpetaParaCompartir(conn, clientSocket, buffer);
+    menuOpcionesPrincipales(conn, clientSocket, buffer);
 }
 
 void menuSeleccionCarpetaParaCompartir(PGconn *conn, SOCKET clientSocket, char buffer[1024])
@@ -121,4 +125,19 @@ void menuBuscarArchivosPorNombre(PGconn *conn, SOCKET clientSocket, char buffer[
 
     sendMessage(clientSocket, nombreArchivo);
     system("cls");
+}
+
+void menuSeleccionArchivoParaDescarga(PGconn *conn,vector<Archivo> archivos, SOCKET clientSocket, char buffer[1024])
+{
+    int opcion;
+    cout<<"Seleccione el archivo que desea descargar: "<<endl;
+    for(int i = 0; i < archivos.size(); i++)
+    {
+        cout<<i+1<<". "<<archivos[i].nombre<<endl;
+    }
+    cout<<"Ingrese una opcion: ";cin>>opcion;
+
+    char *archivoSeleccionado = archivos[opcion-1].nombre;
+    sendMessage(clientSocket, archivoSeleccionado);
+    
 }
