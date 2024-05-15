@@ -102,7 +102,8 @@ void menuOpcionesPrincipales(PGconn *conn, SOCKET clientSocket, char buffer[1024
     switch (opcion)
     {
     case 1:
-        sendMessage(clientSocket, "VER_ARCHIVOS_DISPONIBLES");
+        sendMessage(clientSocket, "CONSULTAR_ARCHIVOS_DISPONIBLES");
+        mostrarArchivosDisponibles(conn, clientSocket, buffer);
         break;
     case 2:
         sendMessage(clientSocket, "BUSCAR_ARCHIVO_POR_NOMBRE");
@@ -132,6 +133,7 @@ void menuBuscarArchivosPorNombre(PGconn *conn, SOCKET clientSocket, char buffer[
 
     sendMessage(clientSocket, nombreArchivo);
     system("cls");
+    mostrarArchivosPorElNombre(conn, clientSocket, buffer);
 }
 
 void menuSeleccionArchivoParaDescarga(PGconn *conn,vector<Archivo> archivos, SOCKET clientSocket, char buffer[1024])
@@ -146,5 +148,49 @@ void menuSeleccionArchivoParaDescarga(PGconn *conn,vector<Archivo> archivos, SOC
 
     char *archivoSeleccionado = archivos[opcion-1].nombre;
     sendMessage(clientSocket, archivoSeleccionado);
+    system("cls");
+
     
+}
+
+void mostrarArchivosPorElNombre(PGconn *conn, SOCKET clientSocket, char buffer[1024])
+{
+    int bytesReceived = recv(clientSocket, buffer, 1024, 0);
+    buffer[bytesReceived] = '\0';
+    int cantidadArchivos = atoi(buffer);
+    Archivo *archivos = new Archivo[cantidadArchivos];
+    cout<<"Archivos encontrados"<<endl<<"===================="<<endl;
+    for(int i = 0; i<cantidadArchivos; i++)
+    {
+        bytesReceived = recv(clientSocket, buffer, 1024, 0);
+        buffer[bytesReceived] = '\0';
+        int id = atoi(strtok(buffer, ","));
+        char *nombre = strtok(NULL, ",");
+        int tamanyo = atoi(strtok(NULL, ","));
+        char *tipo = strtok(NULL, ",");
+        int id_usuario = atoi(strtok(NULL, ","));
+        
+        cout<<"Nombre: "<<nombre<<endl<<"Tamanyo: "<<tamanyo<<endl<<"Tipo: "<<tipo<<endl<<"===================="<<endl;
+    }
+}
+
+void mostrarArchivosDisponibles(PGconn *conn, SOCKET clientSocket, char buffer[1024])
+{
+    int bytesReceived = recv(clientSocket, buffer, 1024, 0);
+    buffer[bytesReceived] = '\0';
+    int cantidadArchivos = atoi(buffer);
+    Archivo *archivos = new Archivo[cantidadArchivos];
+    cout<<"Archivos disponibles"<<endl<<"===================="<<endl;
+    for(int i = 0; i<cantidadArchivos; i++)
+    {
+        bytesReceived = recv(clientSocket, buffer, 1024, 0);
+        buffer[bytesReceived] = '\0';
+        int id = atoi(strtok(buffer, ","));
+        char *nombre = strtok(NULL, ",");
+        int tamanyo = atoi(strtok(NULL, ","));
+        char *tipo = strtok(NULL, ",");
+        int id_usuario = atoi(strtok(NULL, ","));
+        
+        cout<<"Nombre: "<<nombre<<endl<<"Tamanyo: "<<tamanyo<<endl<<"Tipo: "<<tipo<<endl<<"===================="<<endl;
+    }
 }

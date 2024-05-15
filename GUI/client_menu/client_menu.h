@@ -17,3 +17,7 @@ void menuSeleccionCarpetaParaCompartir(PGconn *conn, SOCKET clientSocket, char b
 
 void menuBuscarArchivosPorNombre(PGconn *conn, SOCKET clientSocket, char buffer[1024]);
 
+void mostrarArchivosPorElNombre(PGconn *conn, SOCKET clientSocket, char buffer[1024]);
+
+void mostrarArchivosDisponibles(PGconn *conn, SOCKET clientSocket, char buffer[1024]);
+

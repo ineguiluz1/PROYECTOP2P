@@ -89,5 +89,11 @@ bool initBD(PGconn *conn);
 
 char *lecturaScriptSQL(char* nombreArchivo);
 
+//Funcion para obtener los usuarios activos
+Usuario *get_usuarios_activos(PGconn *conn, int* num_rows);
+
+// Funcion para obtener los archivos disponibles
+Archivo *get_archivos_disponibles(PGconn *conn, int* num_rows);
+
 
 #endif

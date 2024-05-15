@@ -797,3 +797,105 @@ Transferencia *get_transferencias_from_usuario(PGconn *conn, int *num_rows, int 
     return transferencias;
 };
 
+Usuario *get_usuarios_activos(PGconn *conn, int* num_rows)
+{
+    PGresult *res = PQexec(conn, "SELECT * from usuario, nodo, nodousuario WHERE usuario.id = nodousuario.id_usuario AND nodo.id = nodosuario.id_nodo AND nodo.disponibilidad = TRUE");
+
+    // Comprobar si la consulta fue exitosa
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        printf("Query failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        return NULL;
+    }
+
+    // Obtener el número de filas
+    *num_rows = PQntuples(res);
+
+    // Reservar memoria para el array de Usuarios
+    Usuario *usuarios = malloc(*num_rows * sizeof(Usuario));
+    if (usuarios == NULL) {
+        printf("Memory allocation failed\n");
+        PQclear(res);
+        return NULL;
+    }
+
+    // Llenar el array de Usuarios con los datos de la consulta
+    for (int i = 0; i < *num_rows; i++) {
+        usuarios[i].id = atoi(PQgetvalue(res, i, 0));
+        strncpy(usuarios[i].nombre, PQgetvalue(res, i, 1), sizeof(usuarios[i].nombre) - 1);
+        strncpy(usuarios[i].email, PQgetvalue(res, i, 2), sizeof(usuarios[i].email) - 1);
+        strncpy(usuarios[i].contrasena, PQgetvalue(res, i, 3), sizeof(usuarios[i].contrasena) - 1);
+        usuarios[i].fecha_registro = strtotime(PQgetvalue(res, i, 4)); // Convert string to time_t
+        usuarios[i].ultimo_login = strtotime(PQgetvalue(res, i, 5)); // Convert string to time_t
+    }
+
+    // Limpor la variable res y retornar el array de Usuarios
+    PQclear(res);
+    return usuarios;
+}
+
+Archivo *get_archivos_disponibles(PGconn *conn, int *num_rows) {
+    // Obtener todos los usuarios activos
+    int cantidad_usuarios;
+    Usuario *usuarios_activos = get_usuarios_activos(conn, &cantidad_usuarios);
+    if (cantidad_usuarios == 0) {
+        return NULL;  // No hay usuarios activos, devolver NULL
+    }
+
+    // Inicializar un contador total de archivos y un puntero para la lista de archivos
+    int total_archivos = 0;
+    Archivo *archivos = NULL;
+
+    // Iterar sobre cada usuario activo para obtener sus archivos
+    for (int i = 0; i < cantidad_usuarios; i++) {
+        char query[1000];
+        sprintf(query, "SELECT * FROM archivo WHERE id_usuario = %d", usuarios_activos[i].id);
+        
+        // Ejecutar la consulta SQL
+        PGresult *res = PQexec(conn, query);
+        if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+            // Si la consulta falla, liberar recursos y devolver NULL
+            PQclear(res);
+            free(usuarios_activos);
+            if (archivos != NULL) {
+                free(archivos);
+            }
+            return NULL;
+        }
+
+        int num_rows_current = PQntuples(res); // Número de filas (archivos) para este usuario
+        
+        // Reasignar memoria para contener todos los archivos obtenidos hasta ahora
+        Archivo *temp = realloc(archivos, (total_archivos + num_rows_current) * sizeof(Archivo));
+        if (temp == NULL) {
+            // Si falla la asignación de memoria, liberar recursos y devolver NULL
+            PQclear(res);
+            free(usuarios_activos);
+            if (archivos != NULL) {
+                free(archivos);
+            }
+            return NULL;
+        }
+
+        archivos = temp; // Actualizar puntero de archivos
+        
+        // Iterar sobre las filas del resultado y almacenar los archivos en la lista
+        for (int j = 0; j < num_rows_current; j++) {
+            archivos[total_archivos].id = atoi(PQgetvalue(res, j, 0));
+            strncpy(archivos[total_archivos].nombre, PQgetvalue(res, j, 1), sizeof(archivos[total_archivos].nombre) - 1);
+            archivos[total_archivos].tamanyo = atol(PQgetvalue(res, j, 2));
+            strncpy(archivos[total_archivos].tipo, PQgetvalue(res, j, 3), sizeof(archivos[total_archivos].tipo) - 1);
+            archivos[total_archivos].fecha_subida = strtotime(PQgetvalue(res, j, 4)); // Convertir string a time_t
+            archivos[total_archivos].id_usuario = atoi(PQgetvalue(res, j, 5));
+            total_archivos++; // Incrementar contador de archivos
+        }
+
+        PQclear(res); // Liberar resultado de la consulta
+    }
+
+    free(usuarios_activos); // Liberar memoria de la lista de usuarios activos
+
+    *num_rows = total_archivos; // Actualizar el número total de archivos encontrados
+    return archivos; // Devolver la lista de archivos
+}
+
