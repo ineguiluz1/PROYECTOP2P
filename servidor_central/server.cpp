@@ -130,9 +130,6 @@ void handleClient(SOCKET& clientSocket, PGconn *conn) {
     } else if (bytesReceived == 0) {
         std::cerr << "El cliente ha cerrado la conexiÃ³n" << std::endl;
     } else {
-        buffer[bytesReceived] = '\0';
-        std::cout << "Mensaje del cliente: " << buffer << std::endl;
-        
         //TODO: Implementar la logica del servidor
         // Analizar el mensaje recibido y responder apropiadamente
         if (strcmp(buffer, "hola") == 0) {
@@ -202,8 +199,11 @@ void handleClient(SOCKET& clientSocket, PGconn *conn) {
 
             char *nombre;
             strcpy(nombre, buffer);
+            int cantidadArchivos = 1;
+            Archivo *archivo = busqueda_archivos_nombre(conn, nombre, &cantidadArchivos);
 
-            printf("Nombre del archivo: %s\n", nombre);
+            printf("Tamaño del archivo%s\n", archivo->nombre);
+
         } else if(strcmp(buffer, "DESCARGAR_ARCHIVO") == 0){
             bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
             buffer[bytesReceived] = '\0';

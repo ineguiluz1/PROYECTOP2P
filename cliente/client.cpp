@@ -48,14 +48,6 @@ int main() {
     // Client setup complete
     std::cout << "Client setup complete. Sending data..." << std::endl;
 
-    sendMessage(clientSocket, "hola");
-    
-    std::cout << "Message sent from client to server: hola" << std::endl;
-
-    // Recibir datos del servidor
-    recv(clientSocket, buffer, sizeof(buffer), 0);
-    std::cout << "Mensaje del servidor: " << buffer << std::endl;
-
     // Cleanup (close client socket, etc.) can be handled elsewhere in the code
     closesocket(clientSocket);
     WSACleanup();
