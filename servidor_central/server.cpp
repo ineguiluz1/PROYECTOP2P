@@ -193,27 +193,23 @@ void handleClient(SOCKET& clientSocket, PGconn *conn) {
             const char *response = "ELIMINAR_ARCHIVO";
             cout << "Enviando respuesta: " << response << endl;
             send(clientSocket, response, strlen(response), 0);
-        } else if(strcmp(buffer, "BUSCAR_ARCHIVO_POR_NOMBRE")){
+        } else if(strcmp(buffer, "BUSCAR_ARCHIVO_POR_NOMBRE") == 0){
             bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
             buffer[bytesReceived] = '\0';
 
             char *nombre;
             strcpy(nombre, buffer);
-            int cantidadArchivos = 1;
-            Archivo *archivo = busqueda_archivos_nombre(conn, nombre, &cantidadArchivos);
-
-            printf("Tamaño del archivo%s\n", archivo->nombre);
+            printf("Nombre del archivo a buscar: %s\n", nombre);
 
         } else if(strcmp(buffer, "DESCARGAR_ARCHIVO") == 0){
             bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
             buffer[bytesReceived] = '\0';
-            char *nombre;
-            strcpy(nombre, buffer);
-            printf("Nombre del archivo a descargar: %s\n", nombre);
+
+            printf("Nombre del archivo a descargar: %s\n", buffer);
         }
         else {
             const char *response = "Comando no reconocido";
-            cout << "Enviando respuesta: " << response << endl;
+            cout << "Enviando respuesta: " << buffer << endl;
             send(clientSocket, response, strlen(response), 0);
         }
     }
@@ -257,8 +253,6 @@ int connectionsManagement(SOCKET& serverSocket,SOCKADDR_IN& client_addr, PGconn 
         while (true) {
             handleClient(clientSocket, conn);
         }
-        handleClient(clientSocket, conn);
-
         // Close the client socket
         closesocket(clientSocket);
     }
