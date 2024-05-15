@@ -183,7 +183,7 @@ bool handleClient(SOCKET& clientSocket, PGconn *conn) {
             } else if(strcmp(buffer, "BUSCAR_ARCHIVO_POR_NOMBRE") == 0){
                 bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
                 buffer[bytesReceived] = '\0';
-
+                
 
             } else if(strcmp(buffer, "DESCARGAR_ARCHIVO") == 0){
                 bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
