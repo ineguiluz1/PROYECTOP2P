@@ -799,7 +799,7 @@ Transferencia *get_transferencias_from_usuario(PGconn *conn, int *num_rows, int 
 
 Usuario *get_usuarios_activos(PGconn *conn, int* num_rows)
 {
-    PGresult *res = PQexec(conn, "SELECT * from usuario, nodo, nodousuario WHERE usuario.id = nodousuario.id_usuario AND nodo.id = nodosuario.id_nodo AND nodo.disponibilidad = TRUE");
+    PGresult *res = PQexec(conn, "SELECT * from usuario, nodo, usuarionodo WHERE usuario.id = usuarionodo.id_usuario AND nodo.id = usuarionodo.id_nodo AND nodo.disponibilidad = TRUE");
 
     // Comprobar si la consulta fue exitosa
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {

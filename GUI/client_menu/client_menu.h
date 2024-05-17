@@ -21,3 +21,5 @@ void mostrarArchivosPorElNombre(PGconn *conn, SOCKET clientSocket, char buffer[1
 
 void mostrarArchivosDisponibles(PGconn *conn, SOCKET clientSocket, char buffer[1024]);
 
+void menuSeleccionArchivoParaDescarga(PGconn *conn, SOCKET clientSocket, char buffer[1024]);
+
