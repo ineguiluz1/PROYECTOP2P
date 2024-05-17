@@ -238,15 +238,28 @@ bool handleClient(SOCKET& clientSocket, PGconn *conn,char* clientIP) {
 
             } else if(strcmp(buffer, "consultar_disponibles") == 0){
 
+                cout << "Dentro de consultar_disponibles" << endl;
                 int cantidadArchivos;
                 Archivo *archivos = get_archivos_disponibles(conn, &cantidadArchivos);
-
-                sprintf(buffer, "%d", cantidadArchivos);
-                send(clientSocket, buffer, strlen(buffer), 0);
-
+                cout << "Cantidad de archivos: " << cantidadArchivos << endl;
+                string cantidadArchivosChar = to_string(cantidadArchivos);
+                send(clientSocket, cantidadArchivosChar.c_str(), strlen(cantidadArchivosChar.c_str()), 0);
+                char respuesta[1024] = {0};
                 for(int i = 0; i < cantidadArchivos; i++){
-                    sprintf(buffer, "%d,%s,%ld,%s,%d", archivos[i].id, archivos[i].nombre, archivos[i].tamanyo, archivos[i].tipo, archivos[i].id_usuario);
-                    send(clientSocket, buffer, strlen(buffer), 0);
+                    int bytesReceived = recv(clientSocket, respuesta, sizeof(respuesta), 0);
+                    respuesta[bytesReceived] = '\0';
+                    cout << "Recibido: " << respuesta << endl;
+                    if (strcmp(respuesta, "ok") != 0){
+                        cout<<"Error al enviar los datos de la carpeta"<<endl;
+                        break;
+                    }
+                    string infoArchivo = ""; // String para almacenar la información del archivo
+                    infoArchivo += to_string(archivos[i].id);infoArchivo += ";";
+                    infoArchivo += archivos[i].nombre;infoArchivo += ";";
+                    infoArchivo += to_string(archivos[i].tamanyo);infoArchivo += ";";
+                    infoArchivo += archivos[i].tipo;infoArchivo += ";";
+                    infoArchivo += to_string(archivos[i].id_usuario);
+                    send(clientSocket, infoArchivo.c_str(), strlen(infoArchivo.c_str()), 0);
                 }
 
             }else if (strcmp(buffer, "bye") == 0){
