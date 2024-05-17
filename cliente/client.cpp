@@ -135,3 +135,33 @@ void sendMessage(SOCKET &clientSocket, const char *message)
 {
     send(clientSocket, message, strlen(message), 0);
 }
+
+void sendFile(SOCKET &clientSocket, const char *filePath, char buffer[1024])
+{
+    FILE *file;
+    std::string path(filePath);
+
+    if(path.substr(path.find_last_of(".") + 1) == "txt"){
+        file = fopen(filePath, "r");
+        if (file != NULL) {
+            while (fgets(buffer, sizeof(buffer), file) != NULL) {
+                send(clientSocket, buffer, strlen(buffer), 0);
+            }
+        }
+    } else {
+        file = fopen(filePath, "rb");
+        if (file != NULL) {
+            int bytesRead = 0;
+            while ((bytesRead = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+                send(clientSocket, buffer, bytesRead, 0);
+            }
+        }
+    }
+
+    if(file == NULL) {
+        std::cerr << "Error opening file" << std::endl;
+        return;
+    }
+
+    fclose(file);
+}
