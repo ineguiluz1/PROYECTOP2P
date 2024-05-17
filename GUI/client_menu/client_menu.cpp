@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include <libpq-fe.h>
 #include "client_menu.h"
 #include "../../Filesystem/files.h"
@@ -6,7 +7,7 @@
 #include <ws2tcpip.h>
 #include "../../cliente/client.h"
 #include <windows.h>
-#include <vector>
+
 extern "C"
 { // Tell the compiler this is a C function
 #include "../../estructuras/Archivo/Archivo.h"
@@ -224,48 +225,6 @@ void menuBuscarArchivosPorNombre(PGconn *conn, SOCKET clientSocket, char buffer[
     system("cls");
     mostrarArchivosPorElNombre(conn, clientSocket, buffer);
 }
-
-// void mostrarArchivosPorElNombre(PGconn *conn, SOCKET clientSocket, char buffer[1024])
-// {
-//     int bytesReceived = recv(clientSocket, buffer, 1024, 0);
-//     buffer[bytesReceived] = '\0';
-//     int cantidadArchivos = atoi(buffer);
-//     Archivo *archivos = new Archivo[cantidadArchivos];
-//     cout<<"Archivos encontrados"<<endl<<"===================="<<endl;
-//     for(int i = 0; i<cantidadArchivos; i++)
-//     {
-//         bytesReceived = recv(clientSocket, buffer, 1024, 0);
-//         buffer[bytesReceived] = '\0';
-//         int id = atoi(strtok(buffer, ","));
-//         char *nombre = strtok(NULL, ",");
-//         int tamanyo = atoi(strtok(NULL, ","));
-//         char *tipo = strtok(NULL, ",");
-//         int id_usuario = atoi(strtok(NULL, ","));
-
-//         cout<<"Nombre:"<<nombre<<endl<<"Tamanyo: "<<tamanyo<<endl<<"Tipo: "<<tipo<<endl<<"===================="<<endl;
-//     }
-// }
-
-// void mostrarArchivosDisponibles(PGconn *conn, SOCKET clientSocket, char buffer[1024])
-// {
-//     int bytesReceived = recv(clientSocket, buffer, 1024, 0);
-//     buffer[bytesReceived] = '\0';
-//     int cantidadArchivos = atoi(buffer);
-//     Archivo *archivos = new Archivo[cantidadArchivos];
-//     cout<<"Archivos disponibles"<<endl<<"===================="<<endl;
-//     for(int i = 0; i<cantidadArchivos; i++)
-//     {
-//         bytesReceived = recv(clientSocket, buffer, 1024, 0);
-//         buffer[bytesReceived] = '\0';
-//         int id = atoi(strtok(buffer, ","));
-//         char *nombre = strtok(NULL, ",");
-//         int tamanyo = atoi(strtok(NULL, ","));
-//         char *tipo = strtok(NULL, ",");
-//         int id_usuario = atoi(strtok(NULL, ","));
-
-//         cout<<i+1<<"."<<nombre<<endl;
-//     }
-// }
 
 void mostrarArchivosPorElNombre(PGconn *conn, SOCKET clientSocket, char buffer[1024])
 {

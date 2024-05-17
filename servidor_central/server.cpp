@@ -7,6 +7,10 @@
 #include <cstdlib>
 #include <libpq-fe.h>
 #include <stdbool.h>
+#include <thread>
+#include <functional>
+#include <vector>
+
 extern "C"
 { // Tell the compiler this is a C function
 
@@ -376,7 +380,10 @@ int connectionsManagement(SOCKET &serverSocket, SOCKADDR_IN &client_addr, PGconn
 
     // **Changes to capture client address information**
     int clientAddrLen = sizeof(client_addr);
-
+    
+    int clientNumber = 0;
+    string tq;
+    vector<thread> threads;
     // Accept incoming connections
     SOCKET clientSocket;
     while (true)
