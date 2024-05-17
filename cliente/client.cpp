@@ -14,6 +14,8 @@ extern "C" { // Tell the compiler this is a C function
 //! g++ -c client.cpp ../GUI/client_menu/client_menu.cpp ../Filesystem/files.cpp -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
 //! g++ -o client.exe *.o -lstdc++ -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
 
+//! Loguearse con: irene.garcia@correo.com asdfghjkl
+
 int main() {
     char buffer[1024] = {0};
 
@@ -50,7 +52,7 @@ int main() {
     WSACleanup();
 
     return 0;
-}
+};
 
 // Function definitions
 int initClient() {

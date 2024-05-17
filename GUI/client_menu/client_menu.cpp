@@ -161,14 +161,16 @@ void menuOpcionesPrincipales(PGconn *conn, SOCKET clientSocket, char buffer[1024
     switch (opcion)
     {
     case 1:
-        sendMessage(clientSocket, "VER_ARCHIVOS_DISPONIBLES");
+        sendMessage(clientSocket, "consultar_disponibles");
+        mostrarArchivosDisponibles(conn, clientSocket, buffer);
         break;
     case 2:
         sendMessage(clientSocket, "BUSCAR_ARCHIVO_POR_NOMBRE");
         menuBuscarArchivosPorNombre(conn, clientSocket, buffer);
         break;
     case 3:
-        sendMessage(clientSocket, "DESCARGAR_ARCHIVO");
+        sendMessage(clientSocket, "consultar_disponibles");
+        menuSeleccionArchivoParaDescarga(conn, clientSocket, buffer);
         break;
     case 4:
         menuCompartirArchivos(conn, clientSocket, buffer, idUsuario);
@@ -194,21 +196,110 @@ void menuBuscarArchivosPorNombre(PGconn *conn, SOCKET clientSocket, char buffer[
 
     sendMessage(clientSocket, nombreArchivo);
     system("cls");
+    mostrarArchivosPorElNombre(conn, clientSocket, buffer);
 }
 
-void menuSeleccionArchivoParaDescarga(PGconn *conn,vector<Archivo> archivos, SOCKET clientSocket, char buffer[1024])
+
+void mostrarArchivosPorElNombre(PGconn *conn, SOCKET clientSocket, char buffer[1024])
+{
+    int bytesReceived = recv(clientSocket, buffer, 1024, 0);
+    buffer[bytesReceived] = '\0';
+    int cantidadArchivos = atoi(buffer);
+    Archivo *archivos = new Archivo[cantidadArchivos];
+    cout<<"Archivos encontrados"<<endl<<"===================="<<endl;
+    for(int i = 0; i<cantidadArchivos; i++)
+    {
+        bytesReceived = recv(clientSocket, buffer, 1024, 0);
+        buffer[bytesReceived] = '\0';
+        int id = atoi(strtok(buffer, ","));
+        char *nombre = strtok(NULL, ",");
+        int tamanyo = atoi(strtok(NULL, ","));
+        char *tipo = strtok(NULL, ",");
+        int id_usuario = atoi(strtok(NULL, ","));
+        
+        cout<<"Nombre:"<<nombre<<endl<<"Tamanyo: "<<tamanyo<<endl<<"Tipo: "<<tipo<<endl<<"===================="<<endl;
+    }
+}
+
+void mostrarArchivosDisponibles(PGconn *conn, SOCKET clientSocket, char buffer[1024])
+{
+    int bytesReceived = recv(clientSocket, buffer, 1024, 0);
+    buffer[bytesReceived] = '\0';
+    int cantidadArchivos = atoi(buffer);
+    Archivo *archivos = new Archivo[cantidadArchivos];
+    cout<<"Archivos disponibles"<<endl<<"===================="<<endl;
+    for(int i = 0; i<cantidadArchivos; i++)
+    {
+        bytesReceived = recv(clientSocket, buffer, 1024, 0);
+        buffer[bytesReceived] = '\0';
+        int id = atoi(strtok(buffer, ","));
+        char *nombre = strtok(NULL, ",");
+        int tamanyo = atoi(strtok(NULL, ","));
+        char *tipo = strtok(NULL, ",");
+        int id_usuario = atoi(strtok(NULL, ","));
+        
+        cout<<i+1<<"."<<nombre<<endl;
+    }
+}
+
+void menuSeleccionArchivoParaDescarga(PGconn *conn, SOCKET clientSocket, char buffer[1024])
 {
     int opcion;
-    cout<<"Seleccione el archivo que desea descargar: "<<endl;
-    for(int i = 0; i < archivos.size(); i++)
-    {
-        cout<<i+1<<". "<<archivos[i].nombre<<endl;
-    }
-    cout<<"Ingrese una opcion: ";cin>>opcion;
+    mostrarArchivosDisponibles(conn, clientSocket, buffer);
 
-    char *archivoSeleccionado = archivos[opcion-1].nombre;
-    sendMessage(clientSocket, archivoSeleccionado);
-    
+    cout<<"Seleccione el archivo que desea descargar: ";cin>>opcion;
+
+}
+
+void mostrarArchivosPorElNombre(PGconn *conn, SOCKET clientSocket, char buffer[1024])
+{
+    int bytesReceived = recv(clientSocket, buffer, 1024, 0);
+    buffer[bytesReceived] = '\0';
+    int cantidadArchivos = atoi(buffer);
+    Archivo *archivos = new Archivo[cantidadArchivos];
+    cout<<"Archivos encontrados"<<endl<<"===================="<<endl;
+    for(int i = 0; i<cantidadArchivos; i++)
+    {
+        bytesReceived = recv(clientSocket, buffer, 1024, 0);
+        buffer[bytesReceived] = '\0';
+        int id = atoi(strtok(buffer, ","));
+        char *nombre = strtok(NULL, ",");
+        int tamanyo = atoi(strtok(NULL, ","));
+        char *tipo = strtok(NULL, ",");
+        int id_usuario = atoi(strtok(NULL, ","));
+        
+        cout<<"Nombre:"<<nombre<<endl<<"Tamanyo: "<<tamanyo<<endl<<"Tipo: "<<tipo<<endl<<"===================="<<endl;
+    }
+}
+
+void mostrarArchivosDisponibles(PGconn *conn, SOCKET clientSocket, char buffer[1024])
+{
+    int bytesReceived = recv(clientSocket, buffer, 1024, 0);
+    buffer[bytesReceived] = '\0';
+    int cantidadArchivos = atoi(buffer);
+    Archivo *archivos = new Archivo[cantidadArchivos];
+    cout<<"Archivos disponibles"<<endl<<"===================="<<endl;
+    for(int i = 0; i<cantidadArchivos; i++)
+    {
+        bytesReceived = recv(clientSocket, buffer, 1024, 0);
+        buffer[bytesReceived] = '\0';
+        int id = atoi(strtok(buffer, ","));
+        char *nombre = strtok(NULL, ",");
+        int tamanyo = atoi(strtok(NULL, ","));
+        char *tipo = strtok(NULL, ",");
+        int id_usuario = atoi(strtok(NULL, ","));
+        
+        cout<<i+1<<"."<<nombre<<endl;
+    }
+}
+
+void menuSeleccionArchivoParaDescarga(PGconn *conn, SOCKET clientSocket, char buffer[1024])
+{
+    int opcion;
+    mostrarArchivosDisponibles(conn, clientSocket, buffer);
+
+    cout<<"Seleccione el archivo que desea descargar: ";cin>>opcion;
+
 }
 
 void menuCompartirArchivos(PGconn *conn, SOCKET clientSocket, char buffer[1024], int idUsuario)

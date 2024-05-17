@@ -107,4 +107,11 @@ void eliminar_nodo(PGconn *conn,char *ip, int idUsuario);
 //
 bool existeNodoDeIdUsuario_IPnodo(PGconn *conn, int *num_rows, int id_usuario, char *ip_nodo);
 
+//Funcion para obtener los usuarios activos
+Usuario *get_usuarios_activos(PGconn *conn, int* num_rows);
+
+// Funcion para obtener los archivos disponibles
+Archivo *get_archivos_disponibles(PGconn *conn, int* num_rows);
+
+
 #endif

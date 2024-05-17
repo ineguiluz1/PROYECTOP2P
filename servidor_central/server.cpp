@@ -202,13 +202,54 @@ bool handleClient(SOCKET& clientSocket, PGconn *conn,char* clientIP) {
                 cout << "Enviando respuesta: " << response << endl;
                 send(clientSocket, response, strlen(response), 0);
             } else if(strcmp(buffer, "BUSCAR_ARCHIVO_POR_NOMBRE") == 0){
+                
                 bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
                 buffer[bytesReceived] = '\0';
+
+                int cantidadArchivos;
+                Archivo *archivos = busqueda_archivos_nombre(conn, buffer, &cantidadArchivos);
+
+                sprintf(buffer, "%d", cantidadArchivos);
+                send(clientSocket, buffer, strlen(buffer), 0);
+
+                for(int i = 0; i < cantidadArchivos; i++){
+                    sprintf(buffer, "%d,%s,%ld,%s,%d", archivos[i].id, archivos[i].nombre, archivos[i].tamanyo, archivos[i].tipo, archivos[i].id_usuario);
+                    send(clientSocket, buffer, strlen(buffer), 0);
+                }
+                
+
             } else if(strcmp(buffer, "DESCARGAR_ARCHIVO") == 0){
-                bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
+                int cantidadArchivos;
+                Archivo *archivos = get_archivos_disponibles(conn, &cantidadArchivos);
+
+                sprintf(buffer, "%d", cantidadArchivos);
+                send(clientSocket, buffer, strlen(buffer), 0);
+
+                int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
                 buffer[bytesReceived] = '\0';
                 printf("Nombre del archivo a descargar: %s\n", buffer);
-            } else if (strcmp(buffer, "bye") == 0){
+            
+                if(strcmp(buffer, "CANTIDAD_RECIBIDA") == 0){
+                    for(int i = 0; i < cantidadArchivos; i++){
+                        sprintf(buffer, "%d,%s,%ld,%s,%d", archivos[i].id, archivos[i].nombre, archivos[i].tamanyo, archivos[i].tipo, archivos[i].id_usuario);
+                        send(clientSocket, buffer, strlen(buffer), 0);
+                    }   
+                }
+
+            } else if(strcmp(buffer, "consultar_disponibles") == 0){
+
+                int cantidadArchivos;
+                Archivo *archivos = get_archivos_disponibles(conn, &cantidadArchivos);
+
+                sprintf(buffer, "%d", cantidadArchivos);
+                send(clientSocket, buffer, strlen(buffer), 0);
+
+                for(int i = 0; i < cantidadArchivos; i++){
+                    sprintf(buffer, "%d,%s,%ld,%s,%d", archivos[i].id, archivos[i].nombre, archivos[i].tamanyo, archivos[i].tipo, archivos[i].id_usuario);
+                    send(clientSocket, buffer, strlen(buffer), 0);
+                }
+
+            }else if (strcmp(buffer, "bye") == 0){
                 printf("Cerrando conexion con cliente\n");
                 break;
             } else if (strcmp(buffer, "DATOS_CARPETA") == 0){
