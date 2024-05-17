@@ -977,4 +977,3 @@ Archivo *get_archivos_disponibles(PGconn *conn, int *num_rows) {
     PQclear(res);
     return archivos;
 }
-

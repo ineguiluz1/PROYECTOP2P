@@ -127,6 +127,7 @@ bool handleClient(SOCKET& clientSocket, PGconn *conn,char* clientIP) {
     while (true){
     // Recibir datos del cliente
         int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
+        buffer[bytesReceived] = '\0';
         cout << "Mensaje recibido: " << buffer << endl;
         if (bytesReceived == SOCKET_ERROR) {
             std::cerr << "Error al recibir datos del cliente" << std::endl;
