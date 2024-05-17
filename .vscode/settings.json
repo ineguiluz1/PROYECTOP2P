@@ -63,6 +63,10 @@
         "menu.h": "c",
         "string.h": "c",
         "stdbool.h": "c",
-        "ctime": "cpp"
+        "ctime": "cpp",
+        "chrono": "cpp",
+        "ratio": "cpp",
+        "thread": "cpp",
+        
     }
 }

@@ -2,7 +2,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <sstream>
-#include "server.h"
+//#include "server.h"
 #include <time.h>
 #include <cstdlib>
 #include <libpq-fe.h>
@@ -23,58 +23,6 @@ extern "C"
 //! g++ -o server.exe *.o -lstdc++ -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
 
 using namespace std;
-
-int main()
-{
-    // Initialize Winsock
-    if (initServer() != 0)
-    {
-        std::cerr << "Failed to initialize Winsock." << std::endl;
-        return 1;
-    }
-
-    // Initialize the database
-    PGconn *conn;
-    bool estadoConexionBD = conexionBD(&conn);
-    if (!estadoConexionBD)
-    {
-        cout << "Error al conectar con la base de datos" << endl;
-        exit(1);
-    }
-
-    // Create a socket
-    SOCKET serverSocket;
-    if (socketCreation(serverSocket) != 0)
-    {
-        std::cerr << "Failed to create socket." << std::endl;
-        return 1;
-    }
-
-    // Bind the socket
-    if (bindSocket(serverSocket) != 0)
-    {
-        std::cerr << "Failed to bind socket." << std::endl;
-        return 1;
-    }
-
-    SOCKADDR_IN client_addr;
-
-    // Listen and accept connections
-    if (connectionsManagement(serverSocket, client_addr, conn) != 0)
-    {
-        std::cerr << "Failed to manage connections." << std::endl;
-        return 1;
-    }
-
-    // Server setup complete
-    std::cout << "Server setup complete. Waiting for incoming connections..." << std::endl;
-
-    // Close the server socket (optional, you can handle this differently in a real server application)
-    closesocket(serverSocket);
-    WSACleanup();
-
-    return 0;
-}
 
 int initServer()
 {
@@ -143,8 +91,9 @@ int bindSocket(SOCKET &serverSocket)
     return 0;
 }
 
-bool handleClient(SOCKET &clientSocket, PGconn *conn, char *clientIP)
+bool handleClient(SOCKET &clientSocket, PGconn *conn, char *clientIP, int clientNumber)
 {
+    std::cout << "Client number: " << clientNumber << std::endl;
     char buffer[1024] = {0};
     int id_usuario = -1;
     while (true)
@@ -382,8 +331,7 @@ int connectionsManagement(SOCKET &serverSocket, SOCKADDR_IN &client_addr, PGconn
     int clientAddrLen = sizeof(client_addr);
     
     int clientNumber = 0;
-    string tq;
-    vector<thread> threads;
+    std::vector<std::thread> threads;
     // Accept incoming connections
     SOCKET clientSocket;
     while (true)
@@ -408,7 +356,10 @@ int connectionsManagement(SOCKET &serverSocket, SOCKADDR_IN &client_addr, PGconn
         std::cout << "Connection to a client established." << std::endl;
         char *clientIP_c = new char[clientIP.length() + 1];
         strcpy(clientIP_c, clientIP.c_str());
-        handleClient(clientSocket, conn, clientIP_c);
+        handleClient(clientSocket, conn, clientIP_c,clientNumber);
+        
+        //threads.emplace_back(std::bind(handleClient, std::ref(clientSocket), conn, clientIP_c,clientNumber));
+        clientNumber++;
 
         // Close the client socket
         closesocket(clientSocket);
@@ -417,5 +368,58 @@ int connectionsManagement(SOCKET &serverSocket, SOCKADDR_IN &client_addr, PGconn
     std::cout << "Fuera while." << std::endl;
     closesocket(serverSocket);
     WSACleanup();
+    return 0;
+}
+
+
+int main()
+{
+    // Initialize Winsock
+    if (initServer() != 0)
+    {
+        std::cerr << "Failed to initialize Winsock." << std::endl;
+        return 1;
+    }
+
+    // Initialize the database
+    PGconn *conn;
+    bool estadoConexionBD = conexionBD(&conn);
+    if (!estadoConexionBD)
+    {
+        cout << "Error al conectar con la base de datos" << endl;
+        exit(1);
+    }
+
+    // Create a socket
+    SOCKET serverSocket;
+    if (socketCreation(serverSocket) != 0)
+    {
+        std::cerr << "Failed to create socket." << std::endl;
+        return 1;
+    }
+
+    // Bind the socket
+    if (bindSocket(serverSocket) != 0)
+    {
+        std::cerr << "Failed to bind socket." << std::endl;
+        return 1;
+    }
+
+    SOCKADDR_IN client_addr;
+
+    // Listen and accept connections
+    if (connectionsManagement(serverSocket, client_addr, conn) != 0)
+    {
+        std::cerr << "Failed to manage connections." << std::endl;
+        return 1;
+    }
+
+    // Server setup complete
+    std::cout << "Server setup complete. Waiting for incoming connections..." << std::endl;
+
+    // Close the server socket (optional, you can handle this differently in a real server application)
+    closesocket(serverSocket);
+    WSACleanup();
+
     return 0;
 }
