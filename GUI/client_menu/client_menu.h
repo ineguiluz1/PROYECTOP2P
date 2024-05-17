@@ -11,9 +11,10 @@ void menuLogin(PGconn *conn, SOCKET clientSocket, char buffer[1024]);
 
 void menuRegister(PGconn *conn, SOCKET clientSocket, char buffer[1024]);
 
-void menuOpcionesPrincipales(PGconn *conn, SOCKET clientSocket, char buffer[1024]);
+void menuOpcionesPrincipales(PGconn *conn, SOCKET clientSocket, char buffer[1024],int idUsuario);
 
 void menuSeleccionCarpetaParaCompartir(PGconn *conn, SOCKET clientSocket, char buffer[1024]);
 
 void menuBuscarArchivosPorNombre(PGconn *conn, SOCKET clientSocket, char buffer[1024]);
 
+void menuCompartirArchivos(PGconn *conn, SOCKET clientSocket, char buffer[1024], int idUsuario);

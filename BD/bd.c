@@ -151,17 +151,16 @@ bool insertar_Archivo(PGconn *conn, char *nombre, long tamanyo, char *tipo, time
     return true;
 };
 
-void eliminarFilasWhereNombreyUsuario(PGconn *conn,char *nombre,int id_usuario){
+void eliminarFilasWhereIdUsuario(PGconn *conn,int id_usuario){
     char query2[10000];
-    sprintf(query2,"DELETE FROM archivo WHERE nombre = '%s' and id_usuario = '%d'",nombre,id_usuario);
+    sprintf(query2,"DELETE FROM archivo WHERE id_usuario = %d",id_usuario);
     PGresult *res = PQexec(conn, query2);
     PQclear(res);
 };
 
-bool insertar_Archivo2(PGconn *conn, char *nombre, long tamanyo, char *tipo, int id_usuario){
-    eliminarFilasWhereNombreyUsuario(conn,nombre,id_usuario);
+bool insertar_Archivo2(PGconn *conn, char *nombre, char *tamanyo, char *tipo, int id_usuario){
     char query[10000];
-    sprintf(query, "INSERT INTO archivo(nombre, tamano, tipo, fecha_subida, id_usuario) VALUES('%s', %ld, '%s', CURRENT_TIMESTAMP, %d)", nombre, tamanyo, tipo, id_usuario);
+    sprintf(query, "INSERT INTO archivo(nombre, tamano, tipo, fecha_subida, id_usuario) VALUES('%s', %s, '%s', NOW(), %d)", nombre, tamanyo, tipo, id_usuario);
     PGresult *res = PQexec(conn, query);
     if (PQresultStatus(res) != PGRES_COMMAND_OK){
         printf("Error executing query: %s\n", PQresultErrorMessage(res));
@@ -795,5 +794,126 @@ Transferencia *get_transferencias_from_usuario(PGconn *conn, int *num_rows, int 
     }
     PQclear(res);
     return transferencias;
+};
+
+int get_id_from_username_password(PGconn *conn,char *username,char *password){
+    char query[1000];
+    int id; 
+
+    sprintf(query, "SELECT id FROM usuario WHERE email= '%s' and contrasena= '%s' ", username, password);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        //printf("Query failed: %s", PQerrorMessage(conn));
+        printf("Error en query\n");
+        PQclear(res);
+        return -1;
+    }
+
+    id = atoi(PQgetvalue(res, 0, 0));
+    PQclear(res);
+    return id;
+}
+
+
+bool actualizarDisponibilidad(PGconn *conn,char *ip, bool nuevoEstado){
+    char query[1000];
+    if (nuevoEstado){
+        sprintf(query,"UPDATE nodo SET disponibilidad = TRUE where ip_dir = '%s'",ip);
+    }else{
+        sprintf(query,"UPDATE nodo SET disponibilidad = FALSE where ip_dir = '%s'",ip);
+    }
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+        //printf("Error executing query: %s\n", PQresultErrorMessage(res));
+        PQclear(res);
+        PQfinish(conn);
+        return false;
+    }
+    PQclear(res);
+    return true;
+};
+
+bool existeNodo(PGconn *conn, char *ip){
+    char query[1000];
+    sprintf(query, "SELECT * FROM nodo WHERE ip_dir = '%s'", ip);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        //printf("Query failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        return false;
+    }
+    int num_rows = PQntuples(res);
+    PQclear(res);
+    return num_rows > 0;
+};
+
+bool insertarUsuarioNodo(PGconn *conn, int id_usuario, int id_nodo){
+    char query[1000];
+    sprintf(query, "INSERT INTO usuarionodo(id_usuario, id_nodo) VALUES(%d, %d)", id_usuario, id_nodo);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+        //printf("Error executing query: %s\n", PQresultErrorMessage(res));
+        PQclear(res);
+        PQfinish(conn);
+        return false;
+    }
+    PQclear(res);
+    return true;
+};
+
+int getIdNodo(PGconn *conn, char *ip){
+    char query[1000];
+    sprintf(query, "SELECT id FROM nodo WHERE ip_dir = '%s'", ip);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        //printf("Query failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        return -1;
+    }
+    int id = atoi(PQgetvalue(res, 0, 0));
+    PQclear(res);
+    return id;
+};
+
+//Mostrar nodo online
+void nodo_online(PGconn *conn,char *ip, int idUsuario){
+    int num_rows = -1;
+    bool existeUsuarioNodo = existeNodoDeIdUsuario_IPnodo(conn,&num_rows,idUsuario,ip);
+    if (existeUsuarioNodo){
+        actualizarDisponibilidad(conn,ip,true);
+    } else {
+        if (existeNodo(conn,ip)){
+            int idNodo = getIdNodo(conn,ip);
+            insertarUsuarioNodo(conn,idUsuario,idNodo);
+            actualizarDisponibilidad(conn,ip,true);
+        } else {
+            insertar_Nodo2(conn,ip,idUsuario);
+            actualizarDisponibilidad(conn,ip,true);
+        }
+    }
+
+};
+
+//Mostrar nodo offline
+void nodo_offline(PGconn *conn,char *ip, int idUsuario){
+    actualizarDisponibilidad(conn,ip,false);
+};
+
+bool existeNodoDeIdUsuario_IPnodo(PGconn *conn, int *num_rows, int id_usuario, char *ip_nodo){
+    char query[1000];
+    sprintf(query, "SELECT id_nodo FROM usuarionodo,nodo WHERE usuarionodo.id_usuario=%d and nodo.ip_dir='%s'", id_usuario,ip_nodo);
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        //printf("Query failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        return NULL;
+    }
+
+    *num_rows = PQntuples(res);
+    if (*num_rows > 0){
+        return true;
+    } else {
+        return false;
+    }
 };
 

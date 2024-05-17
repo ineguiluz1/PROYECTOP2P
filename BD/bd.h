@@ -23,7 +23,9 @@ bool datosPruebaBD(PGconn *conn);
 // Funcion para insertar un archivo en la base de datos
 bool insertar_Archivo(PGconn *conn, char *nombre, long tamanyo, char *tipo, time_t fecha_subida, int id_usuario);
 
-bool insertar_Archivo2(PGconn *conn, char *nombre, long tamanyo, char *tipo, int id_usuario);
+bool insertar_Archivo2(PGconn *conn, char *nombre, char *tamanyo, char *tipo, int id_usuario);
+
+void eliminarFilasWhereIdUsuario(PGconn *conn,int id_usuario);
 
 // Funcion para eliminar un archivo de la base de datos
 bool eliminar_Archivo(PGconn *conn, int id_archivo);
@@ -87,7 +89,22 @@ Transferencia *get_transferencias_from_usuario(PGconn *conn, int *num_rows, int 
 // Funcion para inicializar la base de datos
 bool initBD(PGconn *conn);
 
+// Funcion para leer script de SQL
 char *lecturaScriptSQL(char* nombreArchivo);
 
+//Funcion para obtener el ID de un usuario segun su username y password
+int get_id_from_username_password(PGconn *conn,char *username,char *password);
+
+//Mostrar nodo online
+void nodo_online(PGconn *conn,char *ip, int idUsuario);
+
+//Mostrar nodo offline
+void nodo_offline(PGconn *conn,char *ip, int idUsuario);
+
+//Eliminar nodo
+void eliminar_nodo(PGconn *conn,char *ip, int idUsuario);
+
+//
+bool existeNodoDeIdUsuario_IPnodo(PGconn *conn, int *num_rows, int id_usuario, char *ip_nodo);
 
 #endif

@@ -5,8 +5,7 @@
 #include <fstream>
 #include <cstring> 
 
-vector<string> nombreArchivosDeUnaCarpeta(string ruta){
-    std::string folderPath = "C:/Users/aitor/OneDrive/Escritorio/DATA VISUALIZATION/Deliverable 2/Charts";
+vector<string> nombreArchivosDeUnaCarpeta(string folderPath){
     DIR* dir = opendir(folderPath.c_str());
 
     if (dir) {
@@ -28,7 +27,6 @@ vector<string> nombreArchivosDeUnaCarpeta(string ruta){
 vector<int> tamanyoArchivosDeUnVector(vector<string> archivos, string folderPath){
     std::vector<int> tamanyos;
     for (const std::string& filename : archivos) {
-            std::cout << filename << std::endl;
             std::string file_path = folderPath + "/" + filename;
             std::ifstream in_file(file_path, std::ios::binary);
             in_file.seekg(0, std::ios::end);

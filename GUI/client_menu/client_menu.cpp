@@ -1,6 +1,7 @@
 #include <iostream>
 #include <libpq-fe.h>
 #include "client_menu.h"
+#include "../../Filesystem/files.h"
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include "../../cliente/client.h"
@@ -60,7 +61,13 @@ void menuLogin(PGconn *conn, SOCKET clientSocket, char buffer[1024])
     buffer[bytesReceived] = '\0';
     system("cls");
     if (strcmp(buffer, "ok") == 0){
-        menuOpcionesPrincipales(conn, clientSocket, buffer);
+        char *idUsuario_c = new char[50];
+        bytesReceived = recv(clientSocket, idUsuario_c, 50, 0);
+        idUsuario_c[bytesReceived] = '\0';
+        string idUsuario_str(idUsuario_c);
+        int idUsuario = stoi(idUsuario_str);
+        cout<<"Usuario: "<< idUsuario <<endl;
+        menuOpcionesPrincipales(conn, clientSocket, buffer,idUsuario);
     }else{
         mostrarMenuLoginRegister(conn, clientSocket, buffer);
     }
@@ -80,25 +87,77 @@ void menuRegister(PGconn *conn, SOCKET clientSocket, char buffer[1024])
     char *usuarioFormateado = new char[300];
     sprintf(usuarioFormateado, "%s,%s,%s", nombreUsuario, contrasena, email);
     sendMessage(clientSocket, usuarioFormateado);
-
+    int bytesReceived = recv(clientSocket, buffer, 1024, 0);
+    buffer[bytesReceived] = '\0';
     system("cls");
-    menuOpcionesPrincipales(conn, clientSocket, buffer);
+    if (strcmp(buffer, "ok") == 0){
+        char *idUsuario_c = new char[50];
+        bytesReceived = recv(clientSocket, idUsuario_c, 50, 0);
+        idUsuario_c[bytesReceived] = '\0';
+        string idUsuario_str(idUsuario_c);
+        int idUsuario = stoi(idUsuario_str);
+        cout<<"Usuario: "<< idUsuario <<endl;
+        menuOpcionesPrincipales(conn, clientSocket, buffer,idUsuario);
+    }else{
+        mostrarMenuLoginRegister(conn, clientSocket, buffer);
+    }
 }
 
-void menuSeleccionCarpetaParaCompartir(PGconn *conn, SOCKET clientSocket, char buffer[1024])
+void obtenerDatosCarpeta(SOCKET clientSocket, string rutaCarpeta, int idUsuario)
+{
+    sendMessage(clientSocket, "DATOS_CARPETA");
+    vector<string> nombresArchivos = nombreArchivosDeUnaCarpeta(rutaCarpeta);
+    vector<int> tamanyoArchivos =tamanyoArchivosDeUnVector(nombresArchivos, rutaCarpeta);
+    vector<string> extensionesArchivos = obtenerExtensionDeArchivos(nombresArchivos);
+    cout << "Detalles de archivos obtenidos." << endl;
+    int tamanyoArchvios = nombresArchivos.size();
+    string tamanyoArchivos_str = to_string(tamanyoArchvios);
+    sendMessage(clientSocket, tamanyoArchivos_str.c_str());
+    char respuesta[1024] = {0};
+    for (int i = 0; i < nombresArchivos.size(); i++){
+        int bytesReceived = recv(clientSocket, respuesta, sizeof(respuesta), 0);
+        respuesta[bytesReceived] = '\0';
+        cout << "Recibido: " << respuesta << endl;
+        if (strcmp(respuesta, "ok") != 0){
+            cout<<"Error al enviar los datos de la carpeta"<<endl;
+            return;
+        }
+        string infoArchivo = ""; // String para almacenar la información del archivo
+
+        // Concatenar nombreArchivo
+        infoArchivo += nombresArchivos[i];
+
+        // Concatenar separador ';'
+        infoArchivo += ";";
+
+        // Concatenar tamanyoArchivo
+        infoArchivo += to_string(tamanyoArchivos[i]);
+
+        // Concatenar separador ';'
+        infoArchivo += ";";
+
+        // Concatenar extensionArchivo
+        infoArchivo += extensionesArchivos[i];
+        cout << "Enviando: " << infoArchivo << endl;
+        sendMessage(clientSocket, infoArchivo.c_str());
+    }
+    cout << "Datos de la carpeta enviados correctamente" << endl;
+}
+
+void menuSeleccionCarpetaParaCompartir(PGconn *conn, SOCKET clientSocket, char buffer[1024], int idUsuario)
 {
     char* rutaAbsolutaACarpeta = new char[500];
 
-    cout<<"Seleccione la carpeta que desea compartir: "<<endl<<"Ingrese la ruta absoluta de la carpeta: ";cin>>rutaAbsolutaACarpeta;
+    cout<<"Ingrese la ruta absoluta de la carpeta que quiere compartir, recuerda sustituir los \\ por /: ";cin>>rutaAbsolutaACarpeta;
     
-    sendMessage(clientSocket, rutaAbsolutaACarpeta);
-
+    obtenerDatosCarpeta(clientSocket, rutaAbsolutaACarpeta, idUsuario);
+    menuOpcionesPrincipales(conn, clientSocket, buffer, idUsuario);
 }
 
-void menuOpcionesPrincipales(PGconn *conn, SOCKET clientSocket, char buffer[1024])
+void menuOpcionesPrincipales(PGconn *conn, SOCKET clientSocket, char buffer[1024], int idUsuario)
 {
     int opcion;
-    cout<<"MENU PRINCIPAL"<<endl<<"===================="<<endl<<"1. Ver archivos disponibles"<<endl<<"2. Buscar archivos por nombre"<<endl<<"3. Descargar archivo"<<endl<<"4. Salir"<<endl<<"Ingrese una opcion: ";cin>>opcion;
+    cout<<"MENU PRINCIPAL"<<endl<<"===================="<<endl<<"1. Ver archivos disponibles"<<endl<<"2. Buscar archivos por nombre"<<endl<<"3. Descargar archivo"<<endl<<"4. Compartir archivos"<<endl<<"5. Salir"<<endl<<"Ingrese una opcion: ";cin>>opcion;
     switch (opcion)
     {
     case 1:
@@ -111,7 +170,10 @@ void menuOpcionesPrincipales(PGconn *conn, SOCKET clientSocket, char buffer[1024
     case 3:
         sendMessage(clientSocket, "DESCARGAR_ARCHIVO");
         break;
-    case 4:{
+    case 4:
+        menuCompartirArchivos(conn, clientSocket, buffer, idUsuario);
+        break;
+    case 5:{
         const char *mens = "bye";
         //sendMessage(clientSocket,mensaje);
         sendMessage(clientSocket,mens);
@@ -147,4 +209,22 @@ void menuSeleccionArchivoParaDescarga(PGconn *conn,vector<Archivo> archivos, SOC
     char *archivoSeleccionado = archivos[opcion-1].nombre;
     sendMessage(clientSocket, archivoSeleccionado);
     
+}
+
+void menuCompartirArchivos(PGconn *conn, SOCKET clientSocket, char buffer[1024], int idUsuario)
+{
+    int opcion;
+    cout<<"MENU COMPARTIR ARCHIVOS"<<endl<<"===================="<<endl<<"1. Seleccionar carpeta para compartir"<<endl<<"2. Salir"<<endl<<"Ingrese una opcion: ";cin>>opcion;
+    switch (opcion)
+    {
+    case 1:
+        menuSeleccionCarpetaParaCompartir(conn, clientSocket, buffer, idUsuario);
+        break;
+    case 2:
+        menuOpcionesPrincipales(conn, clientSocket, buffer, idUsuario);
+        break;
+    default:
+        cout<<"Opcion no valida"<<endl;
+        break;
+    }
 }

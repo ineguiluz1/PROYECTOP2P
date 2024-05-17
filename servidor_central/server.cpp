@@ -4,6 +4,7 @@
 #include <sstream>
 #include "server.h"
 #include <time.h>
+#include <cstdlib>
 #include <libpq-fe.h>
 #include <stdbool.h>
 extern "C" { // Tell the compiler this is a C function
@@ -120,8 +121,9 @@ int bindSocket(SOCKET& serverSocket) {
     return 0;
 }
 
-bool handleClient(SOCKET& clientSocket, PGconn *conn) {
+bool handleClient(SOCKET& clientSocket, PGconn *conn,char* clientIP) {
     char buffer[1024] = {0};
+    int id_usuario = -1;
     while (true){
     // Recibir datos del cliente
         int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
@@ -149,6 +151,11 @@ bool handleClient(SOCKET& clientSocket, PGconn *conn) {
                 {
                     printf("Usuario autenticado\n");
                     send(clientSocket, "ok", 2, 0);
+                    id_usuario = get_id_from_username_password(conn, correo, contrasena);
+                    string id_str = to_string(id_usuario);
+                    const char* id_c_str = id_str.c_str();
+                    send(clientSocket, id_c_str, sizeof(id_c_str), 0);
+                    nodo_online(conn, clientIP, id_usuario);
                 }else{
                     printf("Usuario no autenticado\n");
                     send(clientSocket, "no", 2, 0);
@@ -167,11 +174,21 @@ bool handleClient(SOCKET& clientSocket, PGconn *conn) {
                 printf("Contrasena: %s\n", contrasena);
                 char *correo = strtok(nullptr, ",");
                 printf("Correo: %s\n", correo);
+                const char *response;
 
-                registrar_usuario2(conn, nombre, correo, contrasena);
-                const char *response = "REGISTER";
-                cout << "Enviando respuesta: " << response << endl;
-                send(clientSocket, response, strlen(response), 0);
+                if (registrar_usuario2(conn, nombre, correo, contrasena)){
+                    response = "ok";
+                    cout << "Enviando respuesta: " << response << endl;
+                    send(clientSocket, response, strlen(response), 0);
+                    id_usuario = get_id_from_username_password(conn, correo, contrasena);
+                    string id_str = to_string(id_usuario);
+                    const char* id_c_str = id_str.c_str();
+                    send(clientSocket, id_c_str, sizeof(id_c_str), 0);
+                }else{
+                    response = "no ok";
+                    cout << "Enviando respuesta: " << response << endl;
+                    send(clientSocket, response, strlen(response), 0);
+                }
             } else if(strcmp(buffer, "ENVIAR_LISTA_ARCHIVOS") == 0){
                 const char *response = "LISTA_ARCHIVOS";
                 cout << "Enviando respuesta: " << response << endl;
@@ -187,24 +204,45 @@ bool handleClient(SOCKET& clientSocket, PGconn *conn) {
             } else if(strcmp(buffer, "BUSCAR_ARCHIVO_POR_NOMBRE") == 0){
                 bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
                 buffer[bytesReceived] = '\0';
-
-
             } else if(strcmp(buffer, "DESCARGAR_ARCHIVO") == 0){
                 bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
                 buffer[bytesReceived] = '\0';
-
                 printf("Nombre del archivo a descargar: %s\n", buffer);
             } else if (strcmp(buffer, "bye") == 0){
                 printf("Cerrando conexion con cliente\n");
                 break;
-            }
-            else {
+            } else if (strcmp(buffer, "DATOS_CARPETA") == 0){
+                bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
+                buffer[bytesReceived] = '\0';
+                int lengthArchivos = atoi(buffer);
+                cout << "Cantidad de archivos: " << lengthArchivos << endl;
+                send(clientSocket, "ok", 2, 0);
+                eliminarFilasWhereIdUsuario(conn,id_usuario);
+                cout << "Eliminados archivos de la base de datos" << endl;
+                for (int i = 0; i < lengthArchivos; i++){
+                    bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
+                    buffer[bytesReceived] = '\0';
+                    cout << "Recibido: " << buffer << endl;
+                    std::string nombre, tamanyo, extension;
+                    std::stringstream ss(buffer);
+                    std::getline(ss, nombre, ';');
+                    std::getline(ss, tamanyo, ';');
+                    std::getline(ss, extension, ';');
+                    char* nombreChar = new char[nombre.length() + 1];
+                    strcpy(nombreChar, nombre.c_str());
+                    char* tamanyoChar = new char[tamanyo.length() + 1];
+                    strcpy(tamanyoChar, tamanyo.c_str());
+                    char* extensionChar = new char[extension.length() + 1];
+                    strcpy(extensionChar, extension.c_str());
+                    insertar_Archivo2(conn, nombreChar, tamanyoChar, extensionChar, id_usuario);
+                    send(clientSocket, "ok", 2, 0);
+                }
+            }else {
                 const char *response = "Comando no reconocido";
-                cout << "Enviando respuesta: " << buffer << endl;
-                send(clientSocket, response, strlen(response), 0);
             }
         }
     }
+    nodo_offline(conn, clientIP,id_usuario);
     return true;
 }
 
@@ -240,8 +278,9 @@ int connectionsManagement(SOCKET& serverSocket,SOCKADDR_IN& client_addr, PGconn 
 
         // Print message when connection to client is established
         std::cout << "Connection to a client established." << std::endl;
-        
-        handleClient(clientSocket, conn);
+        char *clientIP_c = new char[clientIP.length() + 1];
+        strcpy(clientIP_c, clientIP.c_str());
+        handleClient(clientSocket, conn, clientIP_c);
         
         // Close the client socket
         closesocket(clientSocket);
@@ -253,38 +292,3 @@ int connectionsManagement(SOCKET& serverSocket,SOCKADDR_IN& client_addr, PGconn 
     return 0;
 }
 
-int sendAndReceive(SOCKET& clientSocket) {
-    // Send and receive data
-    char sendbuf[512];
-    char recvbuf[512];
-    int recvbuflen = 512;
-    int iResult;
-
-    // Receive data until the client shuts down the connection
-    do {
-        iResult = recv(clientSocket, recvbuf, recvbuflen, 0);
-        if (iResult > 0) {
-            std::cout << "Bytes received: " << iResult << std::endl;
-            std::cout << "Received message: " << recvbuf << std::endl;
-
-            // Echo the buffer back to the sender
-            iResult = send(clientSocket, recvbuf, iResult, 0);
-            if (iResult == SOCKET_ERROR) {
-                std::cerr << "send failed: " << WSAGetLastError() << std::endl;
-                closesocket(clientSocket);
-                WSACleanup();
-                return 1;
-            }
-            std::cout << "Bytes sent: " << iResult << std::endl;
-        } else if (iResult == 0) {
-            std::cout << "Connection closing..." << std::endl;
-        } else {
-            std::cerr << "recv failed: " << WSAGetLastError() << std::endl;
-            closesocket(clientSocket);
-            WSACleanup();
-            return 1;
-        }
-    } while (iResult > 0);
-
-    return 0;
-} 
