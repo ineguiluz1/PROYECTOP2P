@@ -6,6 +6,7 @@
 #include <vector>
 #include <atomic>
 #include <cstring> // Para strlen y strcmp
+#include "../archivo_class/archivo_class.h"
 
 extern "C" {
 #include "../BD/bd.h"
@@ -205,24 +206,52 @@ void handleClient(SOCKET clientSocket, PGconn *conn, char *clientIP, int clientN
         }
         else if (strcmp(buffer, "DESCARGAR_ARCHIVO") == 0)
         {
+            cout << "Dentro de consultar_disponibles" << endl;
             int cantidadArchivos;
-            Archivo *archivos = get_archivos_disponibles(conn, &cantidadArchivos);
-
-            sprintf(buffer, "%d", cantidadArchivos);
-            send(clientSocket, buffer, strlen(buffer), 0);
-
-            int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
-            buffer[bytesReceived] = '\0';
-            printf("Nombre del archivo a descargar: %s\n", buffer);
-
-            if (strcmp(buffer, "CANTIDAD_RECIBIDA") == 0)
+            Archivo_descarga *archivos = get_archivos_disponibles_descarga(conn, &cantidadArchivos);
+            cout << "Cantidad de archivos: " << cantidadArchivos << endl;
+            string cantidadArchivosChar = to_string(cantidadArchivos);
+            send(clientSocket, cantidadArchivosChar.c_str(), strlen(cantidadArchivosChar.c_str()), 0);
+            char respuesta[1024] = {0};
+            for (int i = 0; i < cantidadArchivos; i++)
             {
-                for (int i = 0; i < cantidadArchivos; i++)
+                int bytesReceived = recv(clientSocket, respuesta, sizeof(respuesta), 0);
+                respuesta[bytesReceived] = '\0';
+                cout << "Recibido: " << respuesta << endl;
+                if (strcmp(respuesta, "ok") != 0)
                 {
-                    sprintf(buffer, "%d,%s,%ld,%s,%d", archivos[i].id, archivos[i].nombre, archivos[i].tamanyo, archivos[i].tipo, archivos[i].id_usuario);
-                    send(clientSocket, buffer, strlen(buffer), 0);
+                    cout << "Error al enviar los datos de la carpeta" << endl;
+                    break;
                 }
+                string infoArchivo = ""; // String para almacenar la información del archivo
+                infoArchivo += to_string(archivos[i].id);
+                infoArchivo += ";";
+                infoArchivo += archivos[i].nombre;
+                infoArchivo += ";";
+                infoArchivo += to_string(archivos[i].tamanyo);
+                infoArchivo += ";";
+                infoArchivo += archivos[i].tipo;
+                infoArchivo += ";";
+                infoArchivo += to_string(archivos[i].id_usuario);
+                infoArchivo += ";";
+                infoArchivo += archivos[i].ip_dir;
+                send(clientSocket, infoArchivo.c_str(), strlen(infoArchivo.c_str()), 0);
+                cout<<"Archivo enviado: "<<infoArchivo<<endl;
             }
+            cout<<"Archivos enviados"<<endl;
+            int posicionArchivoElegido;
+            bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
+            buffer[bytesReceived] = '\0';
+
+            posicionArchivoElegido = atoi(buffer);
+            Archivo_descarga archivoElegido = archivos[posicionArchivoElegido-1];
+            char ip_duenyo_archivo[20];
+            
+            strcpy(ip_duenyo_archivo, archivoElegido.ip_dir);
+
+            cout << "IP del dueño del archivo: " << ip_duenyo_archivo << endl;
+
+            send(clientSocket, ip_duenyo_archivo, strlen(ip_duenyo_archivo), 0);
         }
         else if (strcmp(buffer, "consultar_disponibles") == 0)
         {
