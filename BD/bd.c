@@ -1103,3 +1103,37 @@ Archivo *get_archivos_disponibles(PGconn *conn, int *num_rows)
     PQclear(res);
     return archivos;
 }
+
+Archivo_descarga *get_archivos_disponibles_descarga(PGconn *conn, int *num_rows)
+{
+    char query[1000];
+    sprintf(query, "SELECT archivo.id,archivo.nombre, archivo.tamano,archivo.tipo,archivo.fecha_subida,archivo.id_usuario, nodo.ip_dir from usuarionodo,nodo,archivo where nodo.id = usuarionodo.id_nodo and usuarionodo.id_usuario=archivo.id_usuario and nodo.disponibilidad = true");
+    // Ejecutar la consulta SQL
+    PGresult *res = PQexec(conn, query);
+    if (PQresultStatus(res) != PGRES_TUPLES_OK)
+    {
+        // Si la consulta falla, liberar recursos y devolver NULL
+        PQclear(res);
+        return NULL;
+    }
+    *num_rows = PQntuples(res);
+    Archivo_descarga *archivos = malloc(*num_rows * sizeof(Archivo_descarga));
+    if (archivos == NULL)
+    {
+        // printf("Memory allocation failed\n");
+        PQclear(res);
+        return NULL;
+    }
+    for (int i = 0; i < *num_rows; i++)
+    {
+        archivos[i].id = atoi(PQgetvalue(res, i, 0));
+        strncpy(archivos[i].nombre, PQgetvalue(res, i, 1), sizeof(archivos[i].nombre) - 1);
+        archivos[i].tamanyo = atol(PQgetvalue(res, i, 2));
+        strncpy(archivos[i].tipo, PQgetvalue(res, i, 3), sizeof(archivos[i].tipo) - 1);
+        archivos[i].fecha_subida = strtotime(PQgetvalue(res, i, 4)); // Convertir cadena a time_t
+        archivos[i].id_usuario = atoi(PQgetvalue(res, i, 5));
+        strncpy(archivos[i].ip_dir,PQgetvalue(res, i, 6), sizeof(archivos[i].ip_dir) - 1);
+    }
+    PQclear(res);
+    return archivos;
+}

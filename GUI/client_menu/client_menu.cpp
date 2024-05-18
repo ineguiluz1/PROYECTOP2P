@@ -192,7 +192,7 @@ void menuOpcionesPrincipales(PGconn *conn, SOCKET clientSocket, char buffer[1024
         menuBuscarArchivosPorNombre(conn, clientSocket, buffer);
         break;
     case 3:
-        sendMessage(clientSocket, "consultar_disponibles");
+        sendMessage(clientSocket, "DESCARGAR_ARCHIVO");
         menuSeleccionArchivoParaDescarga(conn, clientSocket, buffer);
         break;
     case 4:
@@ -282,11 +282,14 @@ void mostrarArchivosDisponibles(PGconn *conn, SOCKET clientSocket, char buffer[1
 
 void menuSeleccionArchivoParaDescarga(PGconn *conn, SOCKET clientSocket, char buffer[1024])
 {
-    int opcion;
+    char opcion[10];
     mostrarArchivosDisponibles(conn, clientSocket, buffer);
 
     cout << "Seleccione el archivo que desea descargar: ";
     cin >> opcion;
+    cout<<"Enviado opcion: "<<opcion<<endl;
+    send(clientSocket, opcion, strlen(opcion), 0);
+
 }
 
 void menuCompartirArchivos(PGconn *conn, SOCKET clientSocket, char buffer[1024], int idUsuario)
