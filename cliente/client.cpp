@@ -4,7 +4,13 @@
 #include "client.h"
 #include <libpq-fe.h>
 #include <stdbool.h>
+#include <thread>
+#include <string>
+#include <cstring>
+#include <vector>
 #include "../GUI/client_menu/client_menu.h"
+#include "../networking/servidor/ServidorCliente.h"
+#include "../networking/servidor/servidor.h"
 
 extern "C"
 { // Tell the compiler this is a C function
@@ -12,13 +18,23 @@ extern "C"
 }
 
 //! gcc -c ../estructuras/Nodo/Nodo.c ../estructuras/Transferencia/Transferencia.c ../BD/bd.c ../estructuras/Archivo/Archivo.c ../estructuras/Usuario/Usuario.c -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq
-//! g++ -c client.cpp ../GUI/client_menu/client_menu.cpp ../Filesystem/files.cpp -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
+//! g++ -c client.cpp ../GUI/client_menu/client_menu.cpp ../networking/servidor/*.cpp ../Filesystem/files.cpp -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
 //! g++ -o client.exe *.o -lstdc++ -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
 
 //! Loguearse con: irene.garcia@correo.com asdfghjkl
 
+void hiloTransferencias(){
+    ServidorCliente servidor(55560);
+    servidor.iniciar();
+    std::cout << "Servidor de transferencias iniciado" << std::endl;
+    servidor.aceptarConexiones();
+}
+
 int main()
 {
+    // std::thread t1(hiloTransferencias);
+    // t1.detach();
+
     char buffer[1024] = {0};
 
     // Initialize Winsock
@@ -45,7 +61,7 @@ int main()
     }
 
     // Connect to the server
-    if (connectionToServer(clientSocket) != 0)
+    if (connectionToServer(clientSocket,"127.0.0.1",55555) != 0)
     {
         std::cerr << "Failed to connect to the server." << std::endl;
         return 1;
@@ -107,13 +123,13 @@ int socketCreation(SOCKET &clientSocket)
     return 0;
 }
 
-int connectionToServer(SOCKET &clientSocket)
+int connectionToServer(SOCKET &clientSocket, const char *ip, int port)
 {
     // Connect to the server
     sockaddr_in clientService;
     clientService.sin_family = AF_INET;
-    clientService.sin_addr.s_addr = inet_addr("127.0.0.1"); // Replace with the server's IP address
-    clientService.sin_port = htons(55555);                  // Use the same port as the server
+    clientService.sin_addr.s_addr = inet_addr(ip); // Replace with the server's IP address
+    clientService.sin_port = htons(port);                  // Use the same port as the server
 
     // Use the connect function
     if (connect(clientSocket, reinterpret_cast<SOCKADDR *>(&clientService), sizeof(clientService)) == SOCKET_ERROR)

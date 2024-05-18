@@ -27,6 +27,8 @@ private:
     std::atomic<int> clientNumber{0};
     PGconn *conn;
 
+    // Método para cerrar el servidor
+    void cerrarServidor();
 
     // Método para manejar la conexión con un cliente
     virtual void manejarCliente(SOCKET socketCliente, char *clientIP) = 0;

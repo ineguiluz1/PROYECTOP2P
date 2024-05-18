@@ -92,3 +92,47 @@ void Servidor::aceptarConexiones() {
     }
 }
 
+// Método para manejar la conexión con un cliente
+// void Servidor::manejarCliente(SOCKET socketCliente) {
+//     char buffer[1024];
+//     int bytesRecibidos;
+
+//     while ((bytesRecibidos = recv(socketCliente, buffer, sizeof(buffer), 0)) > 0) {
+//         buffer[bytesRecibidos] = '\0';
+//         std::cout << "Mensaje recibido: " << buffer << std::endl;
+//         send(socketCliente, buffer, bytesRecibidos, 0); // Echo
+//     }
+
+//     if (bytesRecibidos == SOCKET_ERROR) {
+//         std::cerr << "Error al recibir datos del cliente: " << WSAGetLastError() << std::endl;
+//     }
+
+//     std::cout << "Cliente desconectado." << std::endl;
+//     closesocket(socketCliente);
+// }
+
+// Método para cerrar el socket del servidor
+void Servidor::cerrarServidor() {
+    if (socketServidor != INVALID_SOCKET) {
+        closesocket(socketServidor);
+        socketServidor = INVALID_SOCKET;
+    }
+}
+
+// int Servidor::receiveMessage(SOCKET clientSocket, char* buffer) {
+//     int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
+//     if (bytesReceived >= 0) {
+//         buffer[bytesReceived] = '\0';
+//     } else {
+//         buffer[0] = '\0'; // En caso de error, establecer buffer vacío
+//     }
+//     std::cout << "Mensaje recibido (Func): " << buffer << std::endl;
+//     return bytesReceived;
+// }
+
+// void Servidor::inicializarBD(PGconn *conn) {
+//     if (!conexionBD(&conn))
+//     {
+//         std::cerr << "Error al conectar con la base de datos" << std::endl;
+//     }
+// }

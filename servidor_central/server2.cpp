@@ -6,7 +6,7 @@
 #include <vector>
 #include <atomic>
 #include <cstring> // Para strlen y strcmp
-#include "../archivo_class/archivo_class.h"
+// #include "../archivo_class/archivo_class.h"
 
 extern "C" {
 #include "../BD/bd.h"

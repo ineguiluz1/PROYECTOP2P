@@ -194,6 +194,7 @@ void menuOpcionesPrincipales(PGconn *conn, SOCKET clientSocket, char buffer[1024
     case 3:
         sendMessage(clientSocket, "DESCARGAR_ARCHIVO");
         menuSeleccionArchivoParaDescarga(conn, clientSocket, buffer);
+        menuOpcionesPrincipales(conn, clientSocket, buffer, idUsuario);
         break;
     case 4:
         menuCompartirArchivos(conn, clientSocket, buffer, idUsuario);
@@ -289,7 +290,35 @@ void menuSeleccionArchivoParaDescarga(PGconn *conn, SOCKET clientSocket, char bu
     cin >> opcion;
     cout<<"Enviado opcion: "<<opcion<<endl;
     send(clientSocket, opcion, strlen(opcion), 0);
+    int bytesReceived = recv(clientSocket, buffer, 1024, 0);
+    buffer[bytesReceived] = '\0';
+    const char *ip_duenyo_archivo = buffer;
+    cout << "IP para conectarse: " << buffer << endl;
 
+    // //todo: logica para transferencia de archvivos
+    // if (initClient() != 0)
+    // {
+    //     std::cerr << "Failed to initialize Winsock." << std::endl;
+    //     return;
+    // }
+    // SOCKET clientSocketTransferencia;
+    // if (socketCreation(clientSocketTransferencia) != 0)
+    // {
+    //     std::cerr << "Failed to create socket." << std::endl;
+    //     return;
+    // }
+    // //todo: descomentar linea de abajo y borrar la siguiente (esta comentada para hacer pruebas
+    // // if (connectionToServer(clientSocketTransferencia,ip_duenyo_archivo,55560) != 0)
+    // if (connectionToServer(clientSocketTransferencia,ip_duenyo_archivo,55560) != 0)
+    // {
+    //     std::cerr << "Failed to connect to the server." << std::endl;
+    //     return;
+    // }
+    // //todo: una vez conectados, implementar el protocolo de transferencia de archivos
+    // sendMessage(clientSocketTransferencia, "hola");
+    // int bytesReceivedTransferencia = recv(clientSocketTransferencia, buffer, 1024, 0);
+    // buffer[bytesReceivedTransferencia] = '\0';
+    // cout << "Mensaje recibido: " << buffer << endl;
 }
 
 void menuCompartirArchivos(PGconn *conn, SOCKET clientSocket, char buffer[1024], int idUsuario)
