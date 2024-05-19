@@ -24,7 +24,7 @@ extern "C"
 //! Loguearse con: irene.garcia@correo.com asdfghjkl
 
 void hiloTransferencias(){
-    ServidorCliente servidor(55561);
+    ServidorCliente servidor(55560);
     servidor.iniciar();
     std::cout << "Servidor de transferencias iniciado" << std::endl;
     servidor.aceptarConexiones();
@@ -225,9 +225,8 @@ void conectarConCliente(SOCKET &clientSocketTransferencia, const char *ip,int po
         std::cerr << "Failed to connect to the server." << std::endl;
         return;
     }    
-
-    send(clientSocketTransferencia, "fin", strlen("fin"), 0);
 }
+
 void receiveFile(SOCKET &clientSocket, const char *fileName, char buffer[1024])
 {
     FILE *file;

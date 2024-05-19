@@ -285,21 +285,48 @@ void mostrarArchivosDisponibles(PGconn *conn, SOCKET clientSocket, char buffer[1
 
 void menuSeleccionArchivoParaDescarga(PGconn *conn, SOCKET clientSocket, char buffer[1024])
 {
-    char opcion[10];
+    int opcion;
     mostrarArchivosDisponibles(conn, clientSocket, buffer);
 
     cout << "Seleccione el archivo que desea descargar: ";
     cin >> opcion;
     cout<<"Enviado opcion: "<<opcion<<endl;
-    send(clientSocket, opcion, strlen(opcion), 0);
+    string opcionStr = to_string(opcion);
+    send(clientSocket, opcionStr.c_str(), opcionStr.length(), 0);
+    // send(clientSocket, opcion, strlen(opcion), 0);
     int bytesReceived = recv(clientSocket, buffer, 1024, 0);
     buffer[bytesReceived] = '\0';
-    const char *ip_duenyo_archivo = buffer;
+    string ip_duenyo_archivo(buffer);
+    //strcpy(ip_duenyo_archivo, buffer);
     cout << "IP para conectarse: " << ip_duenyo_archivo << endl;
 
+
+    bytesReceived = recv(clientSocket, buffer, 1024, 0);
+    buffer[bytesReceived] = '\0';
+    string rutaDescarga(buffer);
+    cout << "Ruta descarga: " << rutaDescarga << endl;
+
+
     SOCKET clientSocketTransferencia;
-    // //todo: logica para transferencia de archvivos
-    conectarConCliente(clientSocketTransferencia, ip_duenyo_archivo,55560);
+    conectarConCliente(clientSocketTransferencia, ip_duenyo_archivo.c_str(),55561);
+    send(clientSocketTransferencia, "hola", strlen("hola"), 0);
+    int bytesReceivedTransferencia = recv(clientSocketTransferencia, buffer, 1024, 0);
+    buffer[bytesReceivedTransferencia] = '\0';
+    cout << "Recibido: " << buffer << endl;
+
+    send(clientSocketTransferencia, "ruta_archivo", strlen("ruta_archivo"), 0);
+    send(clientSocketTransferencia, rutaDescarga.c_str(), rutaDescarga.length(), 0);
+    bytesReceivedTransferencia = recv(clientSocketTransferencia, buffer, 1024, 0);
+    buffer[bytesReceivedTransferencia] = '\0';
+    string respuesta(buffer);
+    if (respuesta != "ok")
+    {
+        cout << "Error al enviar la ruta de descarga" << endl;
+        return;
+    }
+    receiveFile(clientSocketTransferencia, "descarga.txt",buffer);
+
+    send(clientSocketTransferencia, "fin", strlen("fin"), 0);
 }
 
 void menuCompartirArchivos(PGconn *conn, SOCKET clientSocket, char buffer[1024], int idUsuario)

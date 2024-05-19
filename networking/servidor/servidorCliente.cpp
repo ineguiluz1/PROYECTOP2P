@@ -7,6 +7,7 @@
 #include <functional>
 #include <sstream>
 #include <cstring>
+#include "../../cliente/client.h"
 
 extern "C"
 { // Tell the compiler this is a C function
@@ -38,23 +39,37 @@ void ServidorCliente::manejarCliente(SOCKET socketCliente, char *clientIP)
         return;
     }
 
-    char buffer[1024] = {0};
+    char bufferRec[1024] = {0};
     int id_usuario = -1;
 
     // ServidorIndices::receiveMessage(socketCliente, buffer);
     while (true)
     {
-        int bytesReceived = recv(socketCliente, buffer, sizeof(buffer) - 1, 0);
-        buffer[bytesReceived] = '\0';
-        cout << "Mensaje recibido: " << buffer << endl;
-        if (strcmp(buffer, "hola") == 0)
+        int bytesReceived = recv(socketCliente, bufferRec, sizeof(bufferRec) - 1, 0);
+        bufferRec[bytesReceived] = '\0';
+        cout << "Mensaje recibido en ServidorCliente: " << bufferRec << endl;
+        if (strcmp(bufferRec, "hola") == 0)
         {
             const char *response = "Hola cliente!";
             send(socketCliente, response, strlen(response), 0);
         }
+        else if (strcmp(bufferRec,"ruta_archivo") == 0){
+            bytesReceived = recv(socketCliente, bufferRec, sizeof(bufferRec), 0);
+            bufferRec[bytesReceived] = '\0';
+            string rutaArchivo(bufferRec);
+            cout << "Ruta de archivo recibida: " << rutaArchivo << endl;
+            const char *response = "ok";
+            send(socketCliente, response, strlen(response), 0);
+            sendFile(socketCliente, rutaArchivo.c_str(),bufferRec);
+        }
+        else if (strcmp(bufferRec, "fin") == 0){
+            cout << "Cliente desconectado." << endl;
+            break;
+        }
         else
         {
             const char *response = "Comando no reconocido";
+            send(socketCliente, response, strlen(response), 0);
         }
     }
 

@@ -180,18 +180,25 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
                 //cout<<"Archivo enviado: "<<infoArchivo<<endl;
             }
             cout<<"Archivos enviados"<<endl;
+            cout << "Esperando archivo elegido" << endl;
             int posicionArchivoElegido;
             bytesReceived = recv(socketCliente, buffer, sizeof(buffer), 0);
             buffer[bytesReceived] = '\0';
 
+            cout << "Archivo elegido: " << buffer << endl;
+
             posicionArchivoElegido = atoi(buffer);
             Archivo_descarga archivoElegido = archivos[posicionArchivoElegido-1];
             char ip_duenyo_archivo[20];
-            
             strcpy(ip_duenyo_archivo, archivoElegido.ip_dir);
-
             cout << "IP del duenyo del archivo: " << ip_duenyo_archivo << endl;
             send(socketCliente, ip_duenyo_archivo, strlen(ip_duenyo_archivo), 0);
+
+            char rutaArchivo[1000];
+            strcpy(rutaArchivo, archivoElegido.nombre);
+            cout << "Ruta del archivo: " << rutaArchivo << endl;
+            send(socketCliente, rutaArchivo, strlen(rutaArchivo), 0);
+            cout << "Archivo enviado" << endl;
         }
         else if (strcmp(buffer, "consultar_disponibles") == 0)
         {
