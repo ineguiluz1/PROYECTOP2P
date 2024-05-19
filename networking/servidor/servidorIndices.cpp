@@ -57,7 +57,6 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
         {
             int bytesReceived = recv(socketCliente, buffer, sizeof(buffer) - 1, 0);
             buffer[bytesReceived] = '\0';
-            cout << "Login Recibido: " << buffer << endl;
             char *correo = strtok(buffer, ",");
             char *contrasena = strtok(nullptr, ",");
 
@@ -109,7 +108,6 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
             else
             {
                 response = "no ok";
-                cout << "Enviando respuesta: " << response << endl;
                 send(socketCliente, response, strlen(response), 0);
             }
         }
@@ -139,11 +137,8 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
         }
         else if (strcmp(buffer, "DESCARGAR_ARCHIVO") == 0)
         {
-            cout << "DESCARGAR_ARCHIVO" << endl;
             int cantidadArchivos;
             Archivo_descarga *archivos = get_archivos_disponibles_descarga(conn, &cantidadArchivos);
-            cout << "Cantidad de archivos: " << cantidadArchivos << endl;
-            cout << "Enviando cantidad de archivos" << endl;
             string cantidadArchivosChar = to_string(cantidadArchivos);
             send(socketCliente, cantidadArchivosChar.c_str(), strlen(cantidadArchivosChar.c_str()), 0);
             char respuesta[1024] = {0};
@@ -163,8 +158,6 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
                 if (filename != nullptr) {
                     filename++; // Avanza para saltar el '/'
                 }
-                cout << "Imprimiendo filename" << endl;
-                cout << "Filename: " << filename << endl;
                 string infoArchivo = ""; // String para almacenar la información del archivo
                 infoArchivo += to_string(archivos[i].id);
                 infoArchivo += ";";
@@ -180,8 +173,6 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
                 send(socketCliente, infoArchivo.c_str(), strlen(infoArchivo.c_str()), 0);
                 //cout<<"Archivo enviado: "<<infoArchivo<<endl;
             }
-            cout<<"Archivos enviados"<<endl;
-            cout << "Esperando archivo elegido" << endl;
             int posicionArchivoElegido;
             bytesReceived = recv(socketCliente, buffer, sizeof(buffer), 0);
             buffer[bytesReceived] = '\0';
@@ -197,17 +188,14 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
 
             char rutaArchivo[1000];
             strcpy(rutaArchivo, archivoElegido.nombre);
-            cout << "Ruta del archivo: " << rutaArchivo << endl;
             send(socketCliente, rutaArchivo, strlen(rutaArchivo), 0);
-            cout << "Archivo enviado" << endl;
+
         }
         else if (strcmp(buffer, "consultar_disponibles") == 0)
         {
 
-            cout << "Dentro de consultar_disponibles" << endl;
             int cantidadArchivos;
             Archivo *archivos = get_archivos_disponibles(conn, &cantidadArchivos);
-            cout << "Cantidad de archivos: " << cantidadArchivos << endl;
             string cantidadArchivosChar = to_string(cantidadArchivos);
             send(socketCliente, cantidadArchivosChar.c_str(), strlen(cantidadArchivosChar.c_str()), 0);
             char respuesta[1024] = {0};
@@ -215,7 +203,6 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
             {
                 int bytesReceived = recv(socketCliente, respuesta, sizeof(respuesta), 0);
                 respuesta[bytesReceived] = '\0';
-                cout << "Recibido: " << respuesta << endl;
                 if (strcmp(respuesta, "ok") != 0)
                 {
                     cout << "Error al enviar los datos de la carpeta" << endl;
@@ -229,7 +216,6 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
                 }else{
                     filename = path;
                 }
-                cout << "Filename: " << filename << endl;
                 string infoArchivo = ""; // String para almacenar la información del archivo
                 infoArchivo += to_string(archivos[i].id);
                 infoArchivo += ";";
@@ -253,7 +239,6 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
             bytesReceived = recv(socketCliente, buffer, sizeof(buffer), 0);
             buffer[bytesReceived] = '\0';
             int lengthArchivos = atoi(buffer);
-            cout << "Cantidad de archivos: " << lengthArchivos << endl;
             send(socketCliente, "ok", 2, 0);
             eliminarFilasWhereIdUsuario(conn, id_usuario);
             cout << "Eliminados archivos de la base de datos" << endl;
@@ -261,7 +246,6 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
             {
                 bytesReceived = recv(socketCliente, buffer, sizeof(buffer), 0);
                 buffer[bytesReceived] = '\0';
-                cout << "Recibido: " << buffer << endl;
                 std::string nombre, tamanyo, extension;
                 std::stringstream ss(buffer);
                 std::getline(ss, nombre, ';');

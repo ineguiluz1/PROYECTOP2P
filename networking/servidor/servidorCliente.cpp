@@ -66,7 +66,6 @@ ServidorCliente::~ServidorCliente()
 void sendFile(SOCKET &clientSocket, const char *filePath, char *buffer, size_t bufferSize) {
     FILE *file;
     std::string path(filePath);
-    cout << "Dentro de sendFile" << endl;
     // Open the file in text or binary mode
     if (path.substr(path.find_last_of(".") + 1) == "txt") {
         file = fopen(filePath, "r");
@@ -135,7 +134,6 @@ void ServidorCliente::manejarCliente(SOCKET socketCliente, char *clientIP)
             cout << "Ruta de archivo recibida: " << rutaArchivo << endl;
             const char *response = "ok";
             send(socketCliente, response, strlen(response), 0);
-            cout << "Entrando a sendFile" << endl;
             sendFile(socketCliente, rutaArchivo.c_str(),bufferRec, sizeof(bufferRec));
             break;
         }
