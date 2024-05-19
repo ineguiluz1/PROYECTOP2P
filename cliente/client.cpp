@@ -24,7 +24,7 @@ extern "C"
 //! Loguearse con: irene.garcia@correo.com asdfghjkl
 
 void hiloTransferencias(){
-    ServidorCliente servidor(55560);
+    ServidorCliente servidor(55561);
     servidor.iniciar();
     std::cout << "Servidor de transferencias iniciado" << std::endl;
     servidor.aceptarConexiones();
@@ -152,35 +152,35 @@ void sendMessage(SOCKET &clientSocket, const char *message)
     send(clientSocket, message, strlen(message), 0);
 }
 
-void sendFile(SOCKET &clientSocket, const char *filePath, char buffer[1024])
-{
-    FILE *file;
-    std::string path(filePath);
+// void sendFile(SOCKET &clientSocket, const char *filePath, char *buffer)
+// {
+//     FILE *file;
+//     std::string path(filePath);
 
-    if(path.substr(path.find_last_of(".") + 1) == "txt"){
-        file = fopen(filePath, "r");
-        if (file != NULL) {
-            while (fgets(buffer, sizeof(buffer), file) != NULL) {
-                send(clientSocket, buffer, strlen(buffer), 0);
-            }
-        }
-    } else {
-        file = fopen(filePath, "rb");
-        if (file != NULL) {
-            int bytesRead = 0;
-            while ((bytesRead = fread(buffer, 1, sizeof(buffer), file)) > 0) {
-                send(clientSocket, buffer, bytesRead, 0);
-            }
-        }
-    }
+//     if(path.substr(path.find_last_of(".") + 1) == "txt"){
+//         file = fopen(filePath, "r");
+//         if (file != NULL) {
+//             while (fgets(buffer, sizeof(buffer), file) != NULL) {
+//                 send(clientSocket, buffer, strlen(buffer), 0);
+//             }
+//         }
+//     } else {
+//         file = fopen(filePath, "rb");
+//         if (file != NULL) {
+//             int bytesRead = 0;
+//             while ((bytesRead = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+//                 send(clientSocket, buffer, bytesRead, 0);
+//             }
+//         }
+//     }
 
-    if(file == NULL) {
-        std::cerr << "Error opening file" << std::endl;
-        return;
-    }
+//     if(file == NULL) {
+//         std::cerr << "Error opening file" << std::endl;
+//         return;
+//     }
 
-    fclose(file);
-}
+//     fclose(file);
+// }
 
 
 
@@ -227,27 +227,99 @@ void conectarConCliente(SOCKET &clientSocketTransferencia, const char *ip,int po
     }    
 }
 
-void receiveFile(SOCKET &clientSocket, const char *fileName, char buffer[1024])
-{
+// void receiveFile(SOCKET &clientSocket, const char *fileName, char *buffer)
+// {
+//     FILE *file;
+//     std::string path(fileName);
+
+//     if(path.substr(path.find_last_of(".") + 1) == "txt"){
+//         file = fopen(fileName, "w");
+//         if (file != NULL) {
+//             while (recv(clientSocket, buffer, sizeof(buffer), 0) > 0) {
+//                 fputs(buffer, file);
+//             }
+//         }
+//     } else {
+//         file = fopen(fileName, "wb");
+//         if (file != NULL) {
+//             int bytesRead = 0;
+//             while ((bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0)) > 0) {
+//                 fwrite(buffer, 1, bytesRead, file);
+//             }
+//         }
+//     }
+
+//     fclose(file);
+// }
+
+
+
+void receiveFile(SOCKET &clientSocket, const char *fileName, char *buffer, size_t bufferSize) {
     FILE *file;
     std::string path(fileName);
 
-    if(path.substr(path.find_last_of(".") + 1) == "txt"){
+    // Open the file in text or binary mode
+    if (path.substr(path.find_last_of(".") + 1) == "txt") {
         file = fopen(fileName, "w");
-        if (file != NULL) {
-            while (recv(clientSocket, buffer, sizeof(buffer), 0) > 0) {
-                fputs(buffer, file);
-            }
-        }
     } else {
         file = fopen(fileName, "wb");
-        if (file != NULL) {
-            int bytesRead = 0;
-            while ((bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0)) > 0) {
-                fwrite(buffer, 1, bytesRead, file);
-            }
-        }
     }
 
+    // Check if file was opened successfully
+    if (file == NULL) {
+        std::cerr << "Error opening file: " << fileName << std::endl;
+        return;
+    }
+
+    // Receive the file
+    int bytesRead;
+    while ((bytesRead = recv(clientSocket, buffer, bufferSize, 0)) > 0) {
+        if (strcmp(buffer, "end") == 0) {
+            break;
+        }
+        fwrite(buffer, 1, bytesRead, file);
+    }
+    std::cout << "Transferencia recibida" << std::endl;
+    if (bytesRead == SOCKET_ERROR) {
+        std::cerr << "Error receiving data: " << WSAGetLastError() << std::endl;
+    }
+
+    // Close the file
     fclose(file);
 }
+
+// void receiveFile(SOCKET &clientSocket, const char *fileName, char *buffer, size_t bufferSize)
+// {
+//     FILE *file;
+//     std::string path(fileName);
+
+//     // Open the file in text or binary mode
+//     if (path.substr(path.find_last_of(".") + 1) == "txt") {
+//         file = fopen(fileName, "w");
+//     } else {
+//         file = fopen(fileName, "wb");
+//     }
+
+//     // Check if file was opened successfully
+//     if (file == NULL) {
+//         std::cerr << "Error opening file" << std::endl;
+//         return;
+//     }
+
+//     // Receive the file
+//     int bytesRead;
+//     while ((bytesRead = recv(clientSocket, buffer, bufferSize, 0)) > 0) {
+//         if (path.substr(path.find_last_of(".") + 1) == "txt") {
+//             fwrite(buffer, 1, bytesRead, file);
+//         } else {
+//             fwrite(buffer, 1, bytesRead, file);
+//         }
+//     }
+
+//     if (bytesRead < 0) {
+//         std::cerr << "Error receiving data" << std::endl;
+//     }
+
+//     // Close the file
+//     fclose(file);
+// }

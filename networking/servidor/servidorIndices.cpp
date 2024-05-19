@@ -27,6 +27,7 @@ ServidorIndices::~ServidorIndices() {
     // No se necesita realizar ninguna limpieza adicional en este caso
 }
 
+
 // Método sobrescrito para manejar la conexión con un cliente
 void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
     PGconn *conn;
@@ -288,3 +289,4 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
     closesocket(socketCliente);
 
 }
+

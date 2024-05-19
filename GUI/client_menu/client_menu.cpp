@@ -43,7 +43,7 @@ void mostrarMenuLoginRegister(PGconn *conn, SOCKET clientSocket, char buffer[102
         menuRegister(conn, clientSocket, buffer);
         break;
     case 3:
-        sendMessage(clientSocket, "EXIT");
+        sendMessage(clientSocket, "bye");
         exit(0);
         break;
     default:
@@ -283,7 +283,7 @@ void mostrarArchivosDisponibles(PGconn *conn, SOCKET clientSocket, char buffer[1
     }
 }
 
-void menuSeleccionArchivoParaDescarga(PGconn *conn, SOCKET clientSocket, char buffer[1024])
+void menuSeleccionArchivoParaDescarga(PGconn *conn, SOCKET clientSocket, char *buffer)
 {
     int opcion;
     mostrarArchivosDisponibles(conn, clientSocket, buffer);
@@ -306,6 +306,11 @@ void menuSeleccionArchivoParaDescarga(PGconn *conn, SOCKET clientSocket, char bu
     string rutaDescarga(buffer);
     cout << "Ruta descarga: " << rutaDescarga << endl;
 
+    //todo: Si este bloque no funciona, comentarlo
+    string rutaGuardado;
+    cout << "Elige la ruta donde se guardara el archivo (incluye tambien el nombre del archivo y su extension), recuerda sustituir las \ por /:" << endl;
+    cin >> rutaGuardado;
+    //=======================================================================================================
 
     SOCKET clientSocketTransferencia;
     conectarConCliente(clientSocketTransferencia, ip_duenyo_archivo.c_str(),55561);
@@ -324,9 +329,11 @@ void menuSeleccionArchivoParaDescarga(PGconn *conn, SOCKET clientSocket, char bu
         cout << "Error al enviar la ruta de descarga" << endl;
         return;
     }
-    receiveFile(clientSocketTransferencia, "descarga.txt",buffer);
+    // receiveFile(clientSocketTransferencia, "C:/Users/aitor/OneDrive/Escritorio/recvArchivo/descarga.jpg",buffer,sizeof(buffer));
+    receiveFile(clientSocketTransferencia, rutaGuardado.c_str(),buffer,sizeof(buffer));
 
     send(clientSocketTransferencia, "fin", strlen("fin"), 0);
+    closesocket(clientSocketTransferencia);
 }
 
 void menuCompartirArchivos(PGconn *conn, SOCKET clientSocket, char buffer[1024], int idUsuario)
