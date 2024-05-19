@@ -24,7 +24,7 @@ extern "C"
 //! Loguearse con: irene.garcia@correo.com asdfghjkl
 
 void hiloTransferencias(){
-    ServidorCliente servidor(55560);
+    ServidorCliente servidor(55561);
     servidor.iniciar();
     std::cout << "Servidor de transferencias iniciado" << std::endl;
     servidor.aceptarConexiones();
@@ -32,8 +32,8 @@ void hiloTransferencias(){
 
 int main()
 {
-    // std::thread t1(hiloTransferencias);
-    // t1.detach();
+    std::thread t1(hiloTransferencias);
+    t1.detach();
 
     char buffer[1024] = {0};
 
@@ -180,4 +180,51 @@ void sendFile(SOCKET &clientSocket, const char *filePath, char buffer[1024])
     }
 
     fclose(file);
+}
+
+
+
+
+void conectarConCliente(SOCKET &clientSocketTransferencia, const char *ip,int port)
+{
+    // // Connect to the server
+    // sockaddr_in clientService;
+    // clientService.sin_family = AF_INET;
+    // clientService.sin_addr.s_addr = inet_addr(ip); // Replace with the server's IP address
+    // clientService.sin_port = htons(port);                  // Use the same port as the server
+
+    // // Use the connect function
+    // if (connect(clientSocket, reinterpret_cast<SOCKADDR *>(&clientService), sizeof(clientService)) == SOCKET_ERROR)
+    // {
+    //     std::cout << "Client: connect() - Failed to connect: " << WSAGetLastError() << std::endl;
+    //     closesocket(clientSocket);
+    //     WSACleanup();
+    //     exit(1);
+    // }
+    // else
+    // {
+    //     std::cout << "Client: Connect() is OK!" << std::endl;
+    //     std::cout << "Client: Can start sending and receiving data..." << std::endl;
+    // }
+
+    if (initClient() != 0)
+    {
+        std::cerr << "Failed to initialize Winsock." << std::endl;
+        return;
+    }
+
+    if (socketCreation(clientSocketTransferencia) != 0)
+    {
+        std::cerr << "Failed to create socket." << std::endl;
+        return;
+    }
+    //todo: descomentar linea de abajo y borrar la siguiente (esta comentada para hacer pruebas
+    // if (connectionToServer(clientSocketTransferencia,ip_duenyo_archivo,55560) != 0)
+    if (connectionToServer(clientSocketTransferencia,ip,port) != 0)
+    {
+        std::cerr << "Failed to connect to the server." << std::endl;
+        return;
+    }    
+
+    send(clientSocketTransferencia, "fin", strlen("fin"), 0);
 }

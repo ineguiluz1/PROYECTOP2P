@@ -138,10 +138,11 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
         }
         else if (strcmp(buffer, "DESCARGAR_ARCHIVO") == 0)
         {
-            cout << "Dentro de consultar_disponibles" << endl;
+            cout << "DESCARGAR_ARCHIVO" << endl;
             int cantidadArchivos;
             Archivo_descarga *archivos = get_archivos_disponibles_descarga(conn, &cantidadArchivos);
             cout << "Cantidad de archivos: " << cantidadArchivos << endl;
+            cout << "Enviando cantidad de archivos" << endl;
             string cantidadArchivosChar = to_string(cantidadArchivos);
             send(socketCliente, cantidadArchivosChar.c_str(), strlen(cantidadArchivosChar.c_str()), 0);
             char respuesta[1024] = {0};
@@ -155,10 +156,18 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
                     cout << "Error al enviar los datos de la carpeta" << endl;
                     break;
                 }
+                char* path = archivos[i].nombre;            
+                char* filename = strrchr(path, '/');
+                // Si se encuentra el carácter, avanza un paso para obtener el nombre del archivo
+                if (filename != nullptr) {
+                    filename++; // Avanza para saltar el '/'
+                }
+                cout << "Imprimiendo filename" << endl;
+                cout << "Filename: " << filename << endl;
                 string infoArchivo = ""; // String para almacenar la información del archivo
                 infoArchivo += to_string(archivos[i].id);
                 infoArchivo += ";";
-                infoArchivo += archivos[i].nombre;
+                infoArchivo += filename;
                 infoArchivo += ";";
                 infoArchivo += to_string(archivos[i].tamanyo);
                 infoArchivo += ";";
@@ -168,7 +177,7 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
                 infoArchivo += ";";
                 infoArchivo += archivos[i].ip_dir;
                 send(socketCliente, infoArchivo.c_str(), strlen(infoArchivo.c_str()), 0);
-                cout<<"Archivo enviado: "<<infoArchivo<<endl;
+                //cout<<"Archivo enviado: "<<infoArchivo<<endl;
             }
             cout<<"Archivos enviados"<<endl;
             int posicionArchivoElegido;
@@ -204,10 +213,19 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
                     cout << "Error al enviar los datos de la carpeta" << endl;
                     break;
                 }
+                char* path = archivos[i].nombre;            
+                char* filename = strrchr(path, '/');
+                // Si se encuentra el carácter, avanza un paso para obtener el nombre del archivo
+                if (filename != nullptr) {
+                    filename++; // Avanza para saltar el '/'
+                }else{
+                    filename = path;
+                }
+                cout << "Filename: " << filename << endl;
                 string infoArchivo = ""; // String para almacenar la información del archivo
                 infoArchivo += to_string(archivos[i].id);
                 infoArchivo += ";";
-                infoArchivo += archivos[i].nombre;
+                infoArchivo += filename;
                 infoArchivo += ";";
                 infoArchivo += to_string(archivos[i].tamanyo);
                 infoArchivo += ";";
