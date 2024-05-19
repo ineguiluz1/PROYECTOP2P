@@ -7,3 +7,4 @@ int connectionToServer(SOCKET &clientSocket, const char *ip, int port);
 void sendMessage(SOCKET& clientSocket, const char *message);
 void sendFile(SOCKET& clientSocket, const char *filePath);
 void conectarConCliente(SOCKET &clientSocketTransferencia, const char *ip,int port);
+void receiveFile(SOCKET& clientSocket, const char *fileName);

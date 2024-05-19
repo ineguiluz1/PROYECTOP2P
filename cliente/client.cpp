@@ -228,3 +228,27 @@ void conectarConCliente(SOCKET &clientSocketTransferencia, const char *ip,int po
 
     send(clientSocketTransferencia, "fin", strlen("fin"), 0);
 }
+void receiveFile(SOCKET &clientSocket, const char *fileName, char buffer[1024])
+{
+    FILE *file;
+    std::string path(fileName);
+
+    if(path.substr(path.find_last_of(".") + 1) == "txt"){
+        file = fopen(fileName, "w");
+        if (file != NULL) {
+            while (recv(clientSocket, buffer, sizeof(buffer), 0) > 0) {
+                fputs(buffer, file);
+            }
+        }
+    } else {
+        file = fopen(fileName, "wb");
+        if (file != NULL) {
+            int bytesRead = 0;
+            while ((bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0)) > 0) {
+                fwrite(buffer, 1, bytesRead, file);
+            }
+        }
+    }
+
+    fclose(file);
+}
