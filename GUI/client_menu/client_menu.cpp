@@ -332,7 +332,7 @@ void menuSeleccionArchivoParaDescarga(PGconn *conn, SOCKET clientSocket, char *b
     // receiveFile(clientSocketTransferencia, "C:/Users/aitor/OneDrive/Escritorio/recvArchivo/descarga.jpg",buffer,sizeof(buffer));
     receiveFile(clientSocketTransferencia, rutaGuardado.c_str(),buffer,sizeof(buffer));
 
-    send(clientSocketTransferencia, "fin", strlen("fin"), 0);
+    // send(clientSocketTransferencia, "fin", strlen("fin"), 0);
     closesocket(clientSocketTransferencia);
 }
 
