@@ -24,7 +24,7 @@ extern "C"
 //! Loguearse con: irene.garcia@correo.com asdfghjkl
 
 void hiloTransferencias(){
-    ServidorCliente servidor(55560);
+    ServidorCliente servidor(55561);
     servidor.iniciar();
     std::cout << "Servidor de transferencias iniciado" << std::endl;
     servidor.aceptarConexiones();
@@ -32,8 +32,8 @@ void hiloTransferencias(){
 
 int main()
 {
-    // std::thread t1(hiloTransferencias);
-    // t1.detach();
+    std::thread t1(hiloTransferencias);
+    t1.detach();
 
     char buffer[1024] = {0};
 
@@ -177,6 +177,31 @@ void sendFile(SOCKET &clientSocket, const char *filePath, char buffer[1024])
     if(file == NULL) {
         std::cerr << "Error opening file" << std::endl;
         return;
+    }
+
+    fclose(file);
+}
+
+void receiveFile(SOCKET &clientSocket, const char *fileName, char buffer[1024])
+{
+    FILE *file;
+    std::string path(fileName);
+
+    if(path.substr(path.find_last_of(".") + 1) == "txt"){
+        file = fopen(fileName, "w");
+        if (file != NULL) {
+            while (recv(clientSocket, buffer, sizeof(buffer), 0) > 0) {
+                fputs(buffer, file);
+            }
+        }
+    } else {
+        file = fopen(fileName, "wb");
+        if (file != NULL) {
+            int bytesRead = 0;
+            while ((bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0)) > 0) {
+                fwrite(buffer, 1, bytesRead, file);
+            }
+        }
     }
 
     fclose(file);
