@@ -18,13 +18,15 @@ extern "C"
 }
 
 //! gcc -c ../estructuras/Nodo/Nodo.c ../estructuras/Transferencia/Transferencia.c ../BD/bd.c ../estructuras/Archivo/Archivo.c ../estructuras/Usuario/Usuario.c -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq
-//! g++ -c client.cpp ../GUI/client_menu/client_menu.cpp ../networking/servidor/*.cpp ../Filesystem/files.cpp -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
+//! g++ -c client.cpp ../GUI/client_menu/client_menu.cpp ../networking/servidor/servidorCliente.cpp ../networking/servidor/servidor.cpp ../Filesystem/files.cpp -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
+// Compilar el siguiente cliente en el puerto 55560
 //! g++ -o client.exe *.o -lstdc++ -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
+// Compilar el siguiente cliente en el puerto 55561
+//! g++ -o client2.exe *.o -lstdc++ -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
 
-//! Loguearse con: irene.garcia@correo.com asdfghjkl
-
-void hiloTransferencias(){
-    ServidorCliente servidor(55561);
+void hiloTransferencias()
+{
+    ServidorCliente servidor(55561); // Cliente 1: 55560, Cliente 2: 55561
     servidor.iniciar();
     std::cout << "Servidor de transferencias iniciado" << std::endl;
     servidor.aceptarConexiones();
@@ -61,7 +63,7 @@ int main()
     }
 
     // Connect to the server
-    if (connectionToServer(clientSocket,"127.0.0.1",55555) != 0)
+    if (connectionToServer(clientSocket, "127.0.0.1", 55555) != 0)
     {
         std::cerr << "Failed to connect to the server." << std::endl;
         return 1;
@@ -129,7 +131,7 @@ int connectionToServer(SOCKET &clientSocket, const char *ip, int port)
     sockaddr_in clientService;
     clientService.sin_family = AF_INET;
     clientService.sin_addr.s_addr = inet_addr(ip); // Replace with the server's IP address
-    clientService.sin_port = htons(port);                  // Use the same port as the server
+    clientService.sin_port = htons(port);          // Use the same port as the server
 
     // Use the connect function
     if (connect(clientSocket, reinterpret_cast<SOCKADDR *>(&clientService), sizeof(clientService)) == SOCKET_ERROR)
@@ -152,61 +154,8 @@ void sendMessage(SOCKET &clientSocket, const char *message)
     send(clientSocket, message, strlen(message), 0);
 }
 
-// void sendFile(SOCKET &clientSocket, const char *filePath, char *buffer)
-// {
-//     FILE *file;
-//     std::string path(filePath);
-
-//     if(path.substr(path.find_last_of(".") + 1) == "txt"){
-//         file = fopen(filePath, "r");
-//         if (file != NULL) {
-//             while (fgets(buffer, sizeof(buffer), file) != NULL) {
-//                 send(clientSocket, buffer, strlen(buffer), 0);
-//             }
-//         }
-//     } else {
-//         file = fopen(filePath, "rb");
-//         if (file != NULL) {
-//             int bytesRead = 0;
-//             while ((bytesRead = fread(buffer, 1, sizeof(buffer), file)) > 0) {
-//                 send(clientSocket, buffer, bytesRead, 0);
-//             }
-//         }
-//     }
-
-//     if(file == NULL) {
-//         std::cerr << "Error opening file" << std::endl;
-//         return;
-//     }
-
-//     fclose(file);
-// }
-
-
-
-
-void conectarConCliente(SOCKET &clientSocketTransferencia, const char *ip,int port)
+void conectarConCliente(SOCKET &clientSocketTransferencia, const char *ip, int port)
 {
-    // // Connect to the server
-    // sockaddr_in clientService;
-    // clientService.sin_family = AF_INET;
-    // clientService.sin_addr.s_addr = inet_addr(ip); // Replace with the server's IP address
-    // clientService.sin_port = htons(port);                  // Use the same port as the server
-
-    // // Use the connect function
-    // if (connect(clientSocket, reinterpret_cast<SOCKADDR *>(&clientService), sizeof(clientService)) == SOCKET_ERROR)
-    // {
-    //     std::cout << "Client: connect() - Failed to connect: " << WSAGetLastError() << std::endl;
-    //     closesocket(clientSocket);
-    //     WSACleanup();
-    //     exit(1);
-    // }
-    // else
-    // {
-    //     std::cout << "Client: Connect() is OK!" << std::endl;
-    //     std::cout << "Client: Can start sending and receiving data..." << std::endl;
-    // }
-
     if (initClient() != 0)
     {
         std::cerr << "Failed to initialize Winsock." << std::endl;
@@ -218,108 +167,53 @@ void conectarConCliente(SOCKET &clientSocketTransferencia, const char *ip,int po
         std::cerr << "Failed to create socket." << std::endl;
         return;
     }
-    //todo: descomentar linea de abajo y borrar la siguiente (esta comentada para hacer pruebas
-    // if (connectionToServer(clientSocketTransferencia,ip_duenyo_archivo,55560) != 0)
-    if (connectionToServer(clientSocketTransferencia,ip,port) != 0)
+    // todo: descomentar linea de abajo y borrar la siguiente (esta comentada para hacer pruebas
+    //  if (connectionToServer(clientSocketTransferencia,ip_duenyo_archivo,55560) != 0)
+    if (connectionToServer(clientSocketTransferencia, ip, port) != 0)
     {
         std::cerr << "Failed to connect to the server." << std::endl;
         return;
-    }    
+    }
 }
 
-// void receiveFile(SOCKET &clientSocket, const char *fileName, char *buffer)
-// {
-//     FILE *file;
-//     std::string path(fileName);
-
-//     if(path.substr(path.find_last_of(".") + 1) == "txt"){
-//         file = fopen(fileName, "w");
-//         if (file != NULL) {
-//             while (recv(clientSocket, buffer, sizeof(buffer), 0) > 0) {
-//                 fputs(buffer, file);
-//             }
-//         }
-//     } else {
-//         file = fopen(fileName, "wb");
-//         if (file != NULL) {
-//             int bytesRead = 0;
-//             while ((bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0)) > 0) {
-//                 fwrite(buffer, 1, bytesRead, file);
-//             }
-//         }
-//     }
-
-//     fclose(file);
-// }
-
-
-
-void receiveFile(SOCKET &clientSocket, const char *fileName, char *buffer, size_t bufferSize) {
+void receiveFile(SOCKET &clientSocket, const char *fileName, char *buffer, size_t bufferSize)
+{
     FILE *file;
     std::string path(fileName);
 
     // Open the file in text or binary mode
-    if (path.substr(path.find_last_of(".") + 1) == "txt") {
+    if (path.substr(path.find_last_of(".") + 1) == "txt")
+    {
         file = fopen(fileName, "w");
-    } else {
+    }
+    else
+    {
         file = fopen(fileName, "wb");
     }
 
     // Check if file was opened successfully
-    if (file == NULL) {
+    if (file == NULL)
+    {
         std::cerr << "Error opening file: " << fileName << std::endl;
         return;
     }
 
     // Receive the file
     int bytesRead;
-    while ((bytesRead = recv(clientSocket, buffer, bufferSize, 0)) > 0) {
-        if (strcmp(buffer, "end") == 0) {
+    while ((bytesRead = recv(clientSocket, buffer, bufferSize, 0)) > 0)
+    {
+        if (strcmp(buffer, "end") == 0)
+        {
             break;
         }
         fwrite(buffer, 1, bytesRead, file);
     }
     std::cout << "Transferencia recibida" << std::endl;
-    if (bytesRead == SOCKET_ERROR) {
+    if (bytesRead == SOCKET_ERROR)
+    {
         std::cerr << "Error receiving data: " << WSAGetLastError() << std::endl;
     }
 
     // Close the file
     fclose(file);
 }
-
-// void receiveFile(SOCKET &clientSocket, const char *fileName, char *buffer, size_t bufferSize)
-// {
-//     FILE *file;
-//     std::string path(fileName);
-
-//     // Open the file in text or binary mode
-//     if (path.substr(path.find_last_of(".") + 1) == "txt") {
-//         file = fopen(fileName, "w");
-//     } else {
-//         file = fopen(fileName, "wb");
-//     }
-
-//     // Check if file was opened successfully
-//     if (file == NULL) {
-//         std::cerr << "Error opening file" << std::endl;
-//         return;
-//     }
-
-//     // Receive the file
-//     int bytesRead;
-//     while ((bytesRead = recv(clientSocket, buffer, bufferSize, 0)) > 0) {
-//         if (path.substr(path.find_last_of(".") + 1) == "txt") {
-//             fwrite(buffer, 1, bytesRead, file);
-//         } else {
-//             fwrite(buffer, 1, bytesRead, file);
-//         }
-//     }
-
-//     if (bytesRead < 0) {
-//         std::cerr << "Error receiving data" << std::endl;
-//     }
-
-//     // Close the file
-//     fclose(file);
-// }

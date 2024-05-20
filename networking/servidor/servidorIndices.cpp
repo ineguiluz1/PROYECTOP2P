@@ -9,7 +9,6 @@
 #include <cstring>
 #include "../../FicheroLog/logFile.h"
 
-
 extern "C"
 { // Tell the compiler this is a C function
 
@@ -19,19 +18,19 @@ extern "C"
 
 using namespace std;
 
-ServidorIndices::ServidorIndices(int puerto) : Servidor(puerto) {
-    // Puedes agregar inicializaciones adicionales si es necesario
+ServidorIndices::ServidorIndices(int puerto) : Servidor(puerto)
+{
 }
 
 // Destructor de ServidorIndices
-ServidorIndices::~ServidorIndices() {
-    // No se necesita realizar ninguna limpieza adicional en este caso
+ServidorIndices::~ServidorIndices()
+{
 }
 
-
 // Método sobrescrito para manejar la conexión con un cliente
-void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
-    
+void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP)
+{
+
     Log log("../FicheroLog/log.txt");
     PGconn *conn;
     if (!conexionBD(&conn))
@@ -39,22 +38,21 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
         std::cerr << "Error al conectar con la base de datos" << std::endl;
         return;
     }
-    //Servidor::inicializarBD(conn);
 
-    //std::cout << "Client number: " << clientNumber << std::endl;
     char buffer[1024] = {0};
     int id_usuario = -1;
+    int id_nodo = -1;
+    string logMessage;
 
-    //ServidorIndices::receiveMessage(socketCliente, buffer);
     while (true)
     {
         int bytesReceived = recv(socketCliente, buffer, sizeof(buffer) - 1, 0);
         buffer[bytesReceived] = '\0';
         cout << "Mensaje recibido: " << buffer << endl;
         if (strcmp(buffer, "hola") == 0)
-            {
-                const char *response = "Hola cliente!";
-                send(socketCliente, response, strlen(response), 0);
+        {
+            const char *response = "Hola cliente!";
+            send(socketCliente, response, strlen(response), 0);
         }
         else if (strcmp(buffer, "LOGIN") == 0)
         {
@@ -68,24 +66,20 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
                 printf("Usuario autenticado\n");
                 send(socketCliente, "ok", 2, 0);
                 id_usuario = get_id_from_username_password(conn, correo, contrasena);
+                id_nodo = getIdNodo(conn, clientIP);
                 string id_str = to_string(id_usuario);
                 const char *id_c_str = id_str.c_str();
                 send(socketCliente, id_c_str, sizeof(id_c_str), 0);
                 nodo_online(conn, clientIP, id_usuario);
-                log.writeLog(INFO, "Usuario autenticado");
+                logMessage = "Usuario autenticado con id: " + id_str;
+                log.writeLog(INFO, logMessage);
             }
             else
             {
                 printf("Usuario no autenticado\n");
                 send(socketCliente, "no", 2, 0);
-                log.writeLog(FATAL, "Usuario no autenticado");
+                log.writeLog(INFO, "Usuario no autenticado");
             };
-        }
-        else if (strcmp(buffer, "LOGOUT") == 0)
-        {
-            const char *response = "LOGOUT";
-            cout << "Enviando respuesta: " << response << endl;
-            send(socketCliente, response, strlen(response), 0);
         }
         else if (strcmp(buffer, "REGISTER") == 0)
         {
@@ -109,13 +103,14 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
                 string id_str = to_string(id_usuario);
                 const char *id_c_str = id_str.c_str();
                 send(socketCliente, id_c_str, sizeof(id_c_str), 0);
-                log.writeLog(INFO, "Usuario registrado");
+                logMessage = "Usuario registrado con id: " + id_str;
+                log.writeLog(INFO, logMessage);
             }
             else
             {
                 response = "no ok";
                 send(socketCliente, response, strlen(response), 0);
-                log.writeLog(FATAL, "Usuario no registrado");
+                log.writeLog(INFO, "Usuario no registrado");
             }
         }
         else if (strcmp(buffer, "BUSCAR_ARCHIVO_POR_NOMBRE") == 0)
@@ -128,14 +123,15 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
             Archivo *archivos = busqueda_archivos_nombre(conn, buffer, &cantidadArchivos);
 
             sprintf(buffer, "%d", cantidadArchivos);
-            if(cantidadArchivos == 0)
+            if (cantidadArchivos == 0)
             {
                 log.writeLog(INFO, "No se encontraron archivos en la búsqueda por nombre.");
-            }else
+            }
+            else
             {
                 log.writeLog(INFO, "Archivos encontrados en la búsqueda por nombre.");
             }
-                
+
             send(socketCliente, buffer, strlen(buffer), 0);
 
             for (int i = 0; i < cantidadArchivos; i++)
@@ -158,19 +154,21 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
                 cout << "Recibido: " << respuesta << endl;
                 if (strcmp(respuesta, "ok") != 0)
                 {
-                    log.writeLog(FATAL, "Error al enviar los datos de la carpeta");
+                    log.writeLog(FATAL, "Error al enviar los datos del archivo");
                     break;
-                }else
-                {
-                    log.writeLog(INFO, "Datos de la carpeta enviados correctamente");
                 }
-                char* path = archivos[i].nombre;            
-                char* filename = strrchr(path, '/');
+                else
+                {
+                    log.writeLog(INFO, "Datos del enviados correctamente");
+                }
+                char *path = archivos[i].nombre;
+                char *filename = strrchr(path, '/');
                 // Si se encuentra el carácter, avanza un paso para obtener el nombre del archivo
-                if (filename != nullptr) {
+                if (filename != nullptr)
+                {
                     filename++; // Avanza para saltar el '/'
                 }
-                string infoArchivo = ""; // String para almacenar la información del archivo
+                string infoArchivo = "";
                 infoArchivo += to_string(archivos[i].id);
                 infoArchivo += ";";
                 infoArchivo += filename;
@@ -183,28 +181,28 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
                 infoArchivo += ";";
                 infoArchivo += archivos[i].ip_dir;
                 send(socketCliente, infoArchivo.c_str(), strlen(infoArchivo.c_str()), 0);
-                //cout<<"Archivo enviado: "<<infoArchivo<<endl;
             }
             int posicionArchivoElegido;
             bytesReceived = recv(socketCliente, buffer, sizeof(buffer), 0);
             buffer[bytesReceived] = '\0';
-
             cout << "Archivo elegido: " << buffer << endl;
-
+            logMessage = "Archivo elegido por usuario " + to_string(id_usuario) + " para la tranferencia: " + string(buffer);
+            log.writeLog(INFO, logMessage);
             posicionArchivoElegido = atoi(buffer);
-            Archivo_descarga archivoElegido = archivos[posicionArchivoElegido-1];
+            Archivo_descarga archivoElegido = archivos[posicionArchivoElegido - 1];
             char ip_duenyo_archivo[20];
             strcpy(ip_duenyo_archivo, archivoElegido.ip_dir);
             send(socketCliente, ip_duenyo_archivo, strlen(ip_duenyo_archivo), 0);
-
             char rutaArchivo[1000];
             strcpy(rutaArchivo, archivoElegido.nombre);
             send(socketCliente, rutaArchivo, strlen(rutaArchivo), 0);
-
+            int id_nodo_rec = getIdNodo(conn, archivoElegido.ip_dir);
+            insertar_Transferencia(conn, archivoElegido.id, id_usuario, archivoElegido.id_usuario, id_nodo, id_nodo_rec);
+            logMessage = "Archvio descargado con éxito por el usuario con id: " + to_string(id_usuario);
+            log.writeLog(INFO, logMessage);
         }
         else if (strcmp(buffer, "consultar_disponibles") == 0)
         {
-
             int cantidadArchivos;
             Archivo *archivos = get_archivos_disponibles(conn, &cantidadArchivos);
             string cantidadArchivosChar = to_string(cantidadArchivos);
@@ -218,16 +216,16 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
                 {
                     log.writeLog(FATAL, "Error al enviar los datos de la carpeta");
                     break;
-                }else
-                {
-                    log.writeLog(INFO, "Datos de la carpeta enviados correctamente");
                 }
-                char* path = archivos[i].nombre;            
-                char* filename = strrchr(path, '/');
+                char *path = archivos[i].nombre;
+                char *filename = strrchr(path, '/');
                 // Si se encuentra el carácter, avanza un paso para obtener el nombre del archivo
-                if (filename != nullptr) {
+                if (filename != nullptr)
+                {
                     filename++; // Avanza para saltar el '/'
-                }else{
+                }
+                else
+                {
                     filename = path;
                 }
                 string infoArchivo = ""; // String para almacenar la información del archivo
@@ -242,10 +240,13 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
                 infoArchivo += to_string(archivos[i].id_usuario);
                 send(socketCliente, infoArchivo.c_str(), strlen(infoArchivo.c_str()), 0);
             }
+            logMessage = "Archivos disponibles enviados a usuario con ID: " + to_string(id_usuario);
+            log.writeLog(INFO, logMessage);
         }
         else if (strcmp(buffer, "bye") == 0)
         {
             printf("Cerrando conexion con cliente\n");
+            logMessage = "Cerrando conexión con el cliente con ID: " + to_string(id_usuario);
             log.writeLog(INFO, "Cerrando conexión con el cliente");
             break;
         }
@@ -256,7 +257,8 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
             int lengthArchivos = atoi(buffer);
             send(socketCliente, "ok", 2, 0);
             eliminarFilasWhereIdUsuario(conn, id_usuario);
-            cout << "Eliminados archivos de la base de datos" << endl;
+            logMessage = "Eliminando archivos de la base de datos del usuario con id: " + to_string(id_usuario);
+            log.writeLog(INFO, logMessage);
             for (int i = 0; i < lengthArchivos; i++)
             {
                 bytesReceived = recv(socketCliente, buffer, sizeof(buffer), 0);
@@ -275,18 +277,20 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
                 insertar_Archivo2(conn, nombreChar, tamanyoChar, extensionChar, id_usuario);
                 send(socketCliente, "ok", 2, 0);
             }
+            logMessage = "Archivos de la carpeta del usuario con id: " + to_string(id_usuario) + " insertados en la base de datos";
+            log.writeLog(INFO, logMessage);
         }
         else
         {
-            // const char *response = "Comando no reconocido";
             cout << "Comando no reconocido" << endl;
+            logMessage = "Comando no reconocido: " + string(buffer);
             log.writeLog(WARNING, "Comando no reconocido");
             break;
         }
     }
+    logMessage = "Cerrando conexión con el cliente con ID: " + to_string(id_usuario);
+    log.writeLog(INFO, logMessage);
 
     nodo_offline(conn, clientIP, id_usuario);
     closesocket(socketCliente);
-
 }
-

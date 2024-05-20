@@ -116,5 +116,8 @@ Archivo *get_archivos_disponibles(PGconn *conn, int* num_rows);
 // Funcion para obtener los archivos disponibles para descarga
 Archivo_descarga *get_archivos_disponibles_descarga(PGconn *conn, int *num_rows);
 
+// Funcion para obtener el id de un nodo
+int getIdNodo(PGconn *conn, char *ip);
+
 
 #endif
