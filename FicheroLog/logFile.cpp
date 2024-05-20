@@ -1,4 +1,4 @@
-#include "logFlie.h"
+#include "logFile.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -32,7 +32,7 @@ std::string Log::levelToString(LogLevel level){
             return "INFO";
         case WARNING:
             return "WARNING";
-        case ERROR:
+        case FATAL:
             return "ERROR";
         default:
             return "UNKNOWN";

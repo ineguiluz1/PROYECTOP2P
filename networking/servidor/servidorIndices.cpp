@@ -7,6 +7,7 @@
 #include <functional>
 #include <sstream>
 #include <cstring>
+#include "../../FicheroLog/logFile.h"
 
 
 extern "C"
@@ -30,6 +31,8 @@ ServidorIndices::~ServidorIndices() {
 
 // Método sobrescrito para manejar la conexión con un cliente
 void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
+    
+    Log log("../FicheroLog/log.txt");
     PGconn *conn;
     if (!conexionBD(&conn))
     {
@@ -69,11 +72,13 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
                 const char *id_c_str = id_str.c_str();
                 send(socketCliente, id_c_str, sizeof(id_c_str), 0);
                 nodo_online(conn, clientIP, id_usuario);
+                log.writeLog(INFO, "Usuario autenticado");
             }
             else
             {
                 printf("Usuario no autenticado\n");
                 send(socketCliente, "no", 2, 0);
+                log.writeLog(FATAL, "Usuario no autenticado");
             };
         }
         else if (strcmp(buffer, "LOGOUT") == 0)
@@ -104,18 +109,14 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
                 string id_str = to_string(id_usuario);
                 const char *id_c_str = id_str.c_str();
                 send(socketCliente, id_c_str, sizeof(id_c_str), 0);
+                log.writeLog(INFO, "Usuario registrado");
             }
             else
             {
                 response = "no ok";
                 send(socketCliente, response, strlen(response), 0);
+                log.writeLog(FATAL, "Usuario no registrado");
             }
-        }
-        else if (strcmp(buffer, "ENVIAR_LISTA_ARCHIVOS") == 0)
-        {
-            const char *response = "LISTA_ARCHIVOS";
-            cout << "Enviando respuesta: " << response << endl;
-            send(socketCliente, response, strlen(response), 0);
         }
         else if (strcmp(buffer, "BUSCAR_ARCHIVO_POR_NOMBRE") == 0)
         {
@@ -127,6 +128,14 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
             Archivo *archivos = busqueda_archivos_nombre(conn, buffer, &cantidadArchivos);
 
             sprintf(buffer, "%d", cantidadArchivos);
+            if(cantidadArchivos == 0)
+            {
+                log.writeLog(INFO, "No se encontraron archivos en la búsqueda por nombre.");
+            }else
+            {
+                log.writeLog(INFO, "Archivos encontrados en la búsqueda por nombre.");
+            }
+                
             send(socketCliente, buffer, strlen(buffer), 0);
 
             for (int i = 0; i < cantidadArchivos; i++)
@@ -149,8 +158,11 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
                 cout << "Recibido: " << respuesta << endl;
                 if (strcmp(respuesta, "ok") != 0)
                 {
-                    cout << "Error al enviar los datos de la carpeta" << endl;
+                    log.writeLog(FATAL, "Error al enviar los datos de la carpeta");
                     break;
+                }else
+                {
+                    log.writeLog(INFO, "Datos de la carpeta enviados correctamente");
                 }
                 char* path = archivos[i].nombre;            
                 char* filename = strrchr(path, '/');
@@ -183,7 +195,6 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
             Archivo_descarga archivoElegido = archivos[posicionArchivoElegido-1];
             char ip_duenyo_archivo[20];
             strcpy(ip_duenyo_archivo, archivoElegido.ip_dir);
-            cout << "IP del duenyo del archivo: " << ip_duenyo_archivo << endl;
             send(socketCliente, ip_duenyo_archivo, strlen(ip_duenyo_archivo), 0);
 
             char rutaArchivo[1000];
@@ -205,8 +216,11 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
                 respuesta[bytesReceived] = '\0';
                 if (strcmp(respuesta, "ok") != 0)
                 {
-                    cout << "Error al enviar los datos de la carpeta" << endl;
+                    log.writeLog(FATAL, "Error al enviar los datos de la carpeta");
                     break;
+                }else
+                {
+                    log.writeLog(INFO, "Datos de la carpeta enviados correctamente");
                 }
                 char* path = archivos[i].nombre;            
                 char* filename = strrchr(path, '/');
@@ -232,6 +246,7 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
         else if (strcmp(buffer, "bye") == 0)
         {
             printf("Cerrando conexion con cliente\n");
+            log.writeLog(INFO, "Cerrando conexión con el cliente");
             break;
         }
         else if (strcmp(buffer, "DATOS_CARPETA") == 0)
@@ -265,6 +280,7 @@ void ServidorIndices::manejarCliente(SOCKET socketCliente, char *clientIP) {
         {
             // const char *response = "Comando no reconocido";
             cout << "Comando no reconocido" << endl;
+            log.writeLog(WARNING, "Comando no reconocido");
             break;
         }
     }

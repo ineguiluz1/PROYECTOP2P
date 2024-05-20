@@ -23,6 +23,7 @@ void initClientGUI(PGconn *conn, SOCKET clientSocket, char buffer[1024])
 void mostrarMenuLoginRegister(PGconn *conn, SOCKET clientSocket, char buffer[1024])
 {
     int opcion;
+    system("cls");
     cout << "MENU APP P2P" << endl
          << "====================" << endl
          << "1. Iniciar sesion" << endl
@@ -212,6 +213,7 @@ void menuOpcionesPrincipales(PGconn *conn, SOCKET clientSocket, char buffer[1024
     }
     default:
         cout << "Opcion no valida" << endl;
+        menuOpcionesPrincipales(conn, clientSocket, buffer, idUsuario);
         break;
     }
 }
@@ -248,10 +250,11 @@ void mostrarArchivosPorElNombre(PGconn *conn, SOCKET clientSocket, char buffer[1
         int id_usuario = atoi(strtok(NULL, ","));
 
         cout << "Nombre:" << nombre << endl
-             << "Tamanyo: " << tamanyo << endl
+             << "Tamanyo: " << tamanyo << "bytes"<<endl
              << "Tipo: " << tipo << endl
              << "====================" << endl;
     }
+    menuOpcionesPrincipales(conn, clientSocket, buffer, 0);
 }
 
 void mostrarArchivosDisponibles(PGconn *conn, SOCKET clientSocket, char buffer[1024])
@@ -298,7 +301,7 @@ void menuSeleccionArchivoParaDescarga(PGconn *conn, SOCKET clientSocket, char *b
     buffer[bytesReceived] = '\0';
     string ip_duenyo_archivo(buffer);
     //strcpy(ip_duenyo_archivo, buffer);
-    cout << "IP para conectarse: " << ip_duenyo_archivo << endl;
+
 
 
     bytesReceived = recv(clientSocket, buffer, 1024, 0);
@@ -317,7 +320,6 @@ void menuSeleccionArchivoParaDescarga(PGconn *conn, SOCKET clientSocket, char *b
     send(clientSocketTransferencia, "hola", strlen("hola"), 0);
     int bytesReceivedTransferencia = recv(clientSocketTransferencia, buffer, 1024, 0);
     buffer[bytesReceivedTransferencia] = '\0';
-    cout << "Recibido: " << buffer << endl;
 
     send(clientSocketTransferencia, "ruta_archivo", strlen("ruta_archivo"), 0);
     send(clientSocketTransferencia, rutaDescarga.c_str(), rutaDescarga.length(), 0);

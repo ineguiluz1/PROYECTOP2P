@@ -6,7 +6,7 @@
 #include <chrono>
 #include <ctime>
 
-enum LogLevel { INFO, WARNING, ERROR };
+enum LogLevel { INFO, WARNING, FATAL };
 
 class Log{
     public:

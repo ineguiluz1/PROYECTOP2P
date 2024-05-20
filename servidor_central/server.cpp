@@ -17,7 +17,7 @@ extern "C" {
 }
 
 //! Para compilar : gcc -c ../estructuras/Nodo/Nodo.c ../estructuras/Transferencia/Transferencia.c ../BD/bd.c ../estructuras/Archivo/Archivo.c ../estructuras/Usuario/Usuario.c -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq
-//! g++ -c server.cpp ../networking/servidor/servidor.cpp ../networking/servidor/servidorIndices.cpp -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
+//! g++ -c server.cpp ../FicheroLog/logFile.cpp ../networking/servidor/servidor.cpp ../networking/servidor/servidorIndices.cpp -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
 //! g++ -o server.exe *.o -lstdc++ -I "C:\Program Files\PostgreSQL\16\include" -L "C:\Program Files\PostgreSQL\16\lib" -lpq -lws2_32
 
 using namespace std;
